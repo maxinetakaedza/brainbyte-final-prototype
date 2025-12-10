@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Studio Chat — Subjects & Practicals</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=Space+Mono&family=Playfair+Display:wght@400;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+  :root{
+    --bg-1: #0b0214;
+    --bg-2: #140526;
+    --accent: #9b59ff;
+    --muted: #a99ad6;
+    --glass: rgba(255,255,255,0.03);
+    --bubble: rgba(255,255,255,0.04);
+    --success: #7ee3a6;
+    --danger: #ff6b6b;
+  }
+
+  *{box-sizing:border-box}
+
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: Poppins, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(155,89,255,0.12), transparent),
+                linear-gradient(180deg,var(--bg-1),var(--bg-2));
+    color: #efeaff;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  .app{
+    max-width:1200px;
+    margin:28px auto;
+    height:80vh;
+    display:grid;
+    grid-template-columns: 320px 1fr;
+    gap:18px;
+    position:relative;
+    padding:18px;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.04);
+    padding:18px;
+    border-radius:12px;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    min-height:0;
+  }
+  .sidebar-header h1{
+    margin:0;
+    font-size:20px;
+    letter-spacing:0.6px;
+    font-family: "Playfair Display", serif;
+    color:var(--accent);
+  }
+  .sidebar-header .tagline{
+    margin:4px 0 0 0;
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  .prefs-small{
+    color:var(--muted);
+    font-size:12px;
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+
+  /* user setup */
+  .user-setup{
+    display:flex;
+    gap:8px;
+    flex-direction:column;
+  }
+  .user-setup input, .user-setup select{
+    background:var(--glass);
+    border:1px solid rgba(255,255,255,0.03);
+    color:inherit;
+    padding:8px;
+    border-radius:8px;
+    outline:none;
+  }
+  .user-setup label{
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  /* people */
+  .people{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .person{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    background:rgba(255,255,255,0.02);
+    padding:6px 8px;
+    border-radius:999px;
+    border:1px solid rgba(255,255,255,0.02);
+    font-size:13px;
+  }
+  .person .avatar{
+    width:28px;
+    height:28px;
+    border-radius:50%;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:12px;
+  }
+
+  /* topics */
+  .topics h2{
+    margin:8px 0 6px 0;
+    font-size:14px;
+  }
+  .topics ul{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .topics li{
+    margin:0;
+  }
+  .topic-chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:linear-gradient(180deg, rgba(155,89,255,0.12), rgba(155,89,255,0.04));
+    border:1px solid rgba(155,89,255,0.12);
+    padding:6px;
+    border-radius:12px;
+    font-size:13px;
+    color: #fff;
+  }
+  .open-topic{
+    background:transparent;
+    border:none;
+    color:inherit;
+    padding:8px 10px;
+    cursor:pointer;
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+  }
+  .open-topic:hover{ transform:translateY(-2px); box-shadow:0 8px 18px rgba(0,0,0,0.35) }
+
+  .interest-toggle{
+    background:transparent;
+    border:none;
+    color:rgba(255,255,255,0.6);
+    font-size:16px;
+    cursor:pointer;
+    padding:6px;
+    border-radius:6px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .interest-toggle.selected{
+    color: #ffd166;
+    transform:scale(1.05);
+    text-shadow:0 6px 18px rgba(0,0,0,0.6);
+  }
+  .interest-warning{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:6px;
+  }
+  .star-shake{
+    animation:shake .45s;
+  }
+  @keyframes shake {
+    0%{ transform:translateX(0) }
+    25%{ transform:translateX(-6px) }
+    50%{ transform:translateX(6px) }
+    75%{ transform:translateX(-4px) }
+    100%{ transform:translateX(0) }
+  }
+
+  /* Chat area */
+  .chat{
+    display:flex;
+    flex-direction:column;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:12px;
+    padding:12px;
+    border:1px solid rgba(255,255,255,0.03);
+    min-height:0;
+  }
+  .chat-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:8px 12px;
+    border-bottom:1px solid rgba(255,255,255,0.02);
+  }
+  .chat-header h2{ margin:0; font-family:"Playfair Display", serif; color:var(--accent) }
+  .chat-header p{ margin:0; color:var(--muted); font-size:13px }
+
+  .selected-tags{ display:flex; gap:8px; align-items:center; }
+
+  .messages{
+    padding:18px;
+    overflow:auto;
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    position:relative;
+  }
+
+  /* empty state */
+  .empty{
+    opacity:.8;
+    font-size:15px;
+    color:var(--muted);
+    margin:auto;
+    text-align:center;
+  }
+
+  /* message card */
+  .message{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    max-width:70%;
+  }
+  .message .avatar{
+    min-width:44px;
+    height:44px;
+    border-radius:50%;
+    background:linear-gradient(135deg, rgba(155,89,255,0.2), rgba(233,120,255,0.16));
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-weight:700;
+    font-family: "Montserrat", sans-serif;
+    border:1px solid rgba(255,255,255,0.03);
+    flex-shrink:0;
+  }
+  .bubble{
+    background:var(--bubble);
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.03);
+  }
+  .meta{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .name{
+    font-weight:600;
+    font-size:14px;
+  }
+  .time{
+    color:var(--muted);
+    font-size:12px;
+  }
+
+  /* composer */
+  .composer{
+    display:flex;
+    gap:12px;
+    padding:12px;
+    border-top:1px solid rgba(255,255,255,0.02);
+    align-items:center;
+  }
+  .composer-left{
+    display:flex;
+    gap:8px;
+    flex:1;
+    align-items:center;
+  }
+  #emoji-btn{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:18px;
+    cursor:pointer;
+    padding:8px;
+    border-radius:8px;
+  }
+  #message-input{
+    background:transparent;
+    border:1px dashed rgba(255,255,255,0.04);
+    padding:10px;
+    border-radius:10px;
+    color:inherit;
+    flex:1;
+    outline:none;
+  }
+  .composer-right{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  #send-btn{
+    background:linear-gradient(90deg,var(--accent),#d77bff);
+    border:none;
+    color:#120018;
+    padding:10px 14px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:700;
+    letter-spacing:0.4px;
+  }
+  #send-btn:active{ transform:translateY(1px) }
+
+  /* emoji layer */
+  .emoji-layer{
+    position:fixed;
+    left:0; right:0; top:0; bottom:0;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:1;
+  }
+
+  /* floating emoji style */
+  .float-emoji{
+    position:absolute;
+    font-size:20px;
+    will-change: transform, opacity;
+    animation:floatUp linear;
+    opacity:0.95;
+    filter:drop-shadow(0 6px 20px rgba(0,0,0,0.6));
+  }
+
+  /* keyframes for float */
+  @keyframes floatUp {
+    0%{ transform: translateY(8vh) translateX(0) scale(0.9); opacity:0 }
+    10%{ opacity:1 }
+    100%{ transform: translateY(-22vh) translateX(10vw) scale(1.2); opacity:0 }
+  }
+
+  /* small toast */
+  .toast{
+    position:fixed;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:28px;
+    background:rgba(0,0,0,0.6);
+    color:#fff;
+    padding:8px 12px;
+    border-radius:10px;
+    font-size:13px;
+    z-index:1200;
+    border:1px solid rgba(255,255,255,0.04);
+  }
+
+  /* responsive */
+  @media (max-width:880px){
+    .app{ grid-template-columns: 1fr; padding:12px; height:auto; margin:14px }
+    .sidebar{ order:2 }
+    .chat{ order:1 }
+    .message{ max-width:92% }
+  }
+  </style>
+</head>
+<body>
+  <div class="emoji-layer" id="emoji-layer" aria-hidden="true"></div>
+
+  <div class="app">
+    <aside class="sidebar">
+      <header class="sidebar-header">
+        <h1>Studio Chat</h1>
+        <p class="tagline">Talk about what you love — choose up to 3 interests</p>
+        <div class="prefs-small">Selected: <span id="selected-count">0</span>/3</div>
+      </header>
+
+      <div class="user-setup">
+        <input id="username" placeholder="Your name or nickname" maxlength="20" />
+        <label for="font-select">Message font</label>
+        <select id="font-select" aria-label="Choose a font for your messages">
+          <option value="Poppins">Poppins</option>
+          <option value="Space Mono">Space Mono</option>
+          <option value="Playfair Display">Playfair</option>
+          <option value="Montserrat">Montserrat</option>
+        </select>
+      </div>
+
+      <div>
+        <h3 style="margin:8px 0 6px 0; font-size:13px; color:var(--muted)">Active people</h3>
+        <div class="people" id="people-list">
+          <!-- people injected -->
+        </div>
+      </div>
+
+      <nav class="topics" aria-label="Interests">
+        <h2>Interests (practicals + school subjects)</h2>
+        <div class="interest-warning" id="interest-warning">Click the star to pick favorites (max 3). Click the name to open that topic.</div>
+        <ul id="topic-list">
+          <!-- Topics are injected by JS -->
+        </ul>
+      </nav>
+
+      <footer class="sidebar-footer">
+        <small>Local demo • Messages saved in your browser</small>
+      </footer>
+    </aside>
+
+    <main class="chat" id="chat" role="main">
+      <div class="chat-header">
+        <div>
+          <h2 id="current-topic">Select a topic</h2>
+          <p id="topic-sub">Share tips, resources, and cool stuff!</p>
+        </div>
+        <div class="selected-tags" id="topic-tags"></div>
+      </div>
+
+      <section class="messages" id="messages" tabindex="0" aria-live="polite">
+        <div class="empty" id="empty-state">
+          <p>Pick a topic on the left to start chatting. Floating emojis included ✨</p>
+        </div>
+      </section>
+
+      <form class="composer" id="composer" aria-label="Send a message">
+        <div class="composer-left">
+          <button type="button" id="emoji-btn" title="Insert emoji">😊</button>
+          <input id="message-input" placeholder="Write something encouraging, ask a question, share a tip..." autocomplete="off" />
+        </div>
+
+        <div class="composer-right">
+          <select id="mood-select" title="Add a mood emoji">
+            <option value="">Mood</option>
+            <option>🎵</option>
+            <option>🎨</option>
+            <option>⚙️</option>
+            <option>🎭</option>
+            <option>🏃</option>
+            <option>💻</option>
+          </select>
+          <button type="submit" id="send-btn">Send</button>
+        </div>
+      </form>
+    </main>
+  </div>
+
+  <template id="message-template">
+    <article class="message">
+      <div class="avatar" aria-hidden="true"></div>
+      <div class="bubble">
+        <div class="meta">
+          <span class="name"></span>
+          <time class="time"></time>
+        </div>
+        <div class="text"></div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+  (function(){
+    // Extended topic list: practicals + school subjects
+    const TOPICS = [
+      { id: 'music', label: 'Music', emoji: '🎵' },
+      { id: 'pe', label: 'PE', emoji: '🏃' },
+      { id: 'dandt', label: 'Design & Tech', emoji: '🛠️' },
+      { id: 'art', label: 'Art', emoji: '🎨' },
+      { id: 'drama', label: 'Drama', emoji: '🎭' },
+      { id: 'cs', label: 'Computer Science', emoji: '💻' },
+      { id: 'ict', label: 'ICT', emoji: '🖥️' },
+      { id: 'eng', label: 'Engineering', emoji: '⚙️' },
+
+      // School subjects
+      { id: 'maths', label: 'Maths', emoji: '🔢' },
+      { id: 'english', label: 'English', emoji: '📚' },
+      { id: 'science', label: 'Science', emoji: '🔬' },
+      { id: 'history', label: 'History', emoji: '🏺' },
+      { id: 'geography', label: 'Geography', emoji: '🌍' },
+      { id: 'languages', label: 'Languages', emoji: '🗣️' },
+      { id: 'economics', label: 'Economics', emoji: '📈' }
+    ];
+
+    const EMOJI_POOL = ['🎵','🎨','⚽','🎭','💻','🖥️','⚙️','🎸','🥁','🧩','🪄','🪕','🧰','🏀','📐','🎤','🧪','🔢','📚','🔬','🌍'];
+
+    const SAMPLE_PEOPLE = [
+      'Alex','Riley','Jordan','Taylor','Sam','Morgan','Casey','Jamie','Avery','Chris',
+      'Pat','Lee','Dana','Skyler','Rowan','Charlie','Robin','Sasha','Noah','Mina'
+    ];
+
+    // UI elements
+    const topicListEl = document.getElementById('topic-list');
+    const currentTopicEl = document.getElementById('current-topic');
+    const topicSubEl = document.getElementById('topic-sub');
+    const topicTagsEl = document.getElementById('topic-tags');
+    const messagesEl = document.getElementById('messages');
+    const emptyStateEl = document.getElementById('empty-state');
+    const usernameEl = document.getElementById('username');
+    const fontSelectEl = document.getElementById('font-select');
+    const composerEl = document.getElementById('composer');
+    const inputEl = document.getElementById('message-input');
+    const moodSelect = document.getElementById('mood-select');
+    const emojiBtn = document.getElementById('emoji-btn');
+    const emojiLayer = document.getElementById('emoji-layer');
+    const template = document.getElementById('message-template');
+    const peopleListEl = document.getElementById('people-list');
+    const selectedCountEl = document.getElementById('selected-count');
+
+    let currentTopic = null;
+    let selectedInterests = loadSelectedInterests(); // array of topic ids
+
+    // localStorage keys
+    function storageKey(topicId){ return `studio-chat:${topicId}`; }
+    function prefsKey(){ return `studio-chat:prefs:v1`; }
+
+    // load/save selected interests
+    function loadSelectedInterests(){
+      try {
+        const raw = localStorage.getItem(prefsKey());
+        if(!raw) return [];
+        const obj = JSON.parse(raw);
+        return obj.selectedInterests || [];
+      } catch(e){ return [] }
+    }
+    function saveSelectedInterests(){
+      const obj = { selectedInterests };
+      localStorage.setItem(prefsKey(), JSON.stringify(obj));
+    }
+
+    // utils
+    function loadMessages(topicId){
+      const raw = localStorage.getItem(storageKey(topicId));
+      return raw ? JSON.parse(raw) : [];
+    }
+    function saveMessages(topicId, msgs){
+      localStorage.setItem(storageKey(topicId), JSON.stringify(msgs));
+    }
+    function timeNow(){
+      return new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    }
+    function initials(name){
+      if(!name) return 'U';
+      return name.split(/\s+/).map(s=>s[0]?.toUpperCase()).slice(0,2).join('');
+    }
+    function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function randomEmoji(){ return EMOJI_POOL[Math.floor(Math.random()*EMOJI_POOL.length)]; }
+
+    // populate people list (more people)
+    function renderPeople(){
+      peopleListEl.innerHTML = '';
+      const sample = SAMPLE_PEOPLE.slice(0,9);
+      sample.forEach(name=>{
+        const el = document.createElement('div');
+        el.className = 'person';
+        const avatar = document.createElement('div');
+        avatar.className = 'avatar';
+        avatar.style.background = randomAvatarBg();
+        avatar.textContent = initials(name);
+        el.appendChild(avatar);
+        const span = document.createElement('div');
+        span.textContent = name;
+        el.appendChild(span);
+        peopleListEl.appendChild(el);
+      });
+    }
+
+    // populate topic chips (with star toggles)
+    function renderTopicChips(){
+      topicListEl.innerHTML = '';
+      TOPICS.forEach(t => {
+        const li = document.createElement('li');
+        li.className = 'topic-li';
+        // structure: main open button + star toggle
+        li.innerHTML = `
+          <div class="topic-chip" data-id="${t.id}">
+            <button class="open-topic" data-id="${t.id}" title="Open ${t.label}">${t.emoji} ${t.label}</button>
+            <button class="interest-toggle ${selectedInterests.includes(t.id) ? 'selected' : ''}" aria-label="Toggle interest" data-id="${t.id}">${selectedInterests.includes(t.id) ? '★' : '☆'}</button>
+          </div>
+        `;
+        topicListEl.appendChild(li);
+      });
+      updateSelectedCountDisplay();
+    }
+
+    // clicking topics or toggles
+    topicListEl.addEventListener('click', (e) => {
+      const openBtn = e.target.closest('.open-topic');
+      const toggleBtn = e.target.closest('.interest-toggle');
+      if(openBtn){
+        const id = openBtn.dataset.id;
+        openTopic(id);
+        return;
+      }
+      if(toggleBtn){
+        const id = toggleBtn.dataset.id;
+        toggleInterest(toggleBtn, id);
+        return;
+      }
+    });
+
+    function toggleInterest(btn, id){
+      const isSelected = selectedInterests.includes(id);
+      if(isSelected){
+        selectedInterests = selectedInterests.filter(x=>x!==id);
+        btn.classList.remove('selected');
+        btn.textContent = '☆';
+        saveSelectedInterests();
+        updateSelectedCountDisplay();
+        renderSelectedTags();
+        return;
+      }
+
+      // enforce max 3
+      if(selectedInterests.length >= 3){
+        // animate and show toast
+        btn.classList.add('star-shake');
+        setTimeout(()=> btn.classList.remove('star-shake'), 600);
+        showToast('You can only pick up to 3 interests. Unselect one to add another.');
+        return;
+      }
+
+      selectedInterests.push(id);
+      btn.classList.add('selected');
+      btn.textContent = '★';
+      saveSelectedInterests();
+      updateSelectedCountDisplay();
+      renderSelectedTags();
+    }
+
+    function updateSelectedCountDisplay(){
+      selectedCountEl.textContent = selectedInterests.length;
+      // refresh toggle classes to ensure consistency
+      document.querySelectorAll('.interest-toggle').forEach(btn=>{
+        const id = btn.dataset.id;
+        if(selectedInterests.includes(id)){
+          btn.classList.add('selected');
+          btn.textContent = '★';
+        } else {
+          btn.classList.remove('selected');
+          btn.textContent = '☆';
+        }
+      });
+    }
+
+    function renderSelectedTags(){
+      topicTagsEl.innerHTML = '';
+      if(selectedInterests.length === 0) return;
+      selectedInterests.forEach(id=>{
+        const t = TOPICS.find(x=>x.id===id);
+        if(!t) return;
+        const span = document.createElement('span');
+        span.className = 'topic-chip';
+        span.style.pointerEvents = 'none';
+        span.textContent = `${t.emoji} ${t.label}`;
+        topicTagsEl.appendChild(span);
+      });
+    }
+
+    // open topic
+    function openTopic(id){
+      currentTopic = TOPICS.find(t=>t.id===id);
+      if(!currentTopic) return;
+      currentTopicEl.textContent = `${currentTopic.emoji} ${currentTopic.label}`;
+      topicSubEl.textContent = `Share your favourite ${currentTopic.label.toLowerCase()} projects, tips, or questions.`;
+      renderMessages();
+      renderSelectedTags();
+    }
+
+    // render messages for current topic
+    function renderMessages(){
+      messagesEl.innerHTML = '';
+      if(!currentTopic){
+        messagesEl.appendChild(emptyStateEl);
+        emptyStateEl.style.display = 'block';
+        return;
+      }
+      emptyStateEl.style.display = 'none';
+      const msgs = loadMessages(currentTopic.id);
+      if(msgs.length === 0){
+        const p = document.createElement('div');
+        p.className = 'empty';
+        p.textContent = `No messages yet in ${currentTopic.label}. Say hi!`;
+        messagesEl.appendChild(p);
+        return;
+      }
+      msgs.forEach(m => {
+        const node = template.content.cloneNode(true);
+        const avatar = node.querySelector('.avatar');
+        const nameEl = node.querySelector('.name');
+        const timeEl = node.querySelector('.time');
+        const textEl = node.querySelector('.text');
+
+        avatar.textContent = initials(m.name);
+        avatar.style.background = m.avatarBg || avatar.style.background;
+        nameEl.textContent = m.name || 'Anonymous';
+        timeEl.textContent = m.time || '';
+        textEl.innerHTML = sanitizeAndEmojis(m.text);
+
+        // apply font choices to bubble text
+        textEl.style.fontFamily = m.font || 'Poppins';
+
+        messagesEl.appendChild(node);
+      });
+      setTimeout(()=> messagesEl.scrollTop = messagesEl.scrollHeight, 50);
+    }
+
+    // sanitize and parse a few :emoji: tokens
+    function sanitizeAndEmojis(input){
+      const div = document.createElement('div');
+      div.textContent = input;
+      let safe = div.innerHTML;
+      safe = safe.replace(/:([a-z0-9_\-+]+):/ig, (match, p1) => {
+        const map = { 'guitar':'🎸', 'art':'🎨', 'music':'🎵', 'drama':'🎭', 'code':'💻', 'gear':'⚙️', 'math':'🔢', 'book':'📚' };
+        return map[p1] || match;
+      });
+      return safe;
+    }
+
+    // composer submit
+    composerEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      sendMessage();
+    });
+
+    function sendMessage(){
+      if(!currentTopic) return alert('Choose a topic first.');
+      const name = (usernameEl.value || 'Guest').trim();
+      const text = inputEl.value.trim();
+      const mood = moodSelect.value || '';
+      if(!text && !mood) return;
+
+      const msgs = loadMessages(currentTopic.id);
+      const msg = {
+        id: Date.now(),
+        name,
+        text: (mood ? mood + ' ' : '') + text,
+        time: timeNow(),
+        font: fontSelectEl.value,
+        avatarBg: randomAvatarBg()
+      };
+      msgs.push(msg);
+      saveMessages(currentTopic.id, msgs);
+      inputEl.value = '';
+      renderMessages();
+
+      // friendly bot reply sometimes
+      if(Math.random() < 0.25){
+        setTimeout(()=> {
+          const botMsg = {
+            id: Date.now()+1,
+            name: 'StudioBot',
+            text: `Nice! What specifically do you like about ${currentTopic.label.toLowerCase()}? ${randomEmoji()}`,
+            time: timeNow(),
+            font: 'Space Mono',
+            avatarBg: 'linear-gradient(135deg,#ff9de2,#a86bff)'
+          };
+          const msgs2 = loadMessages(currentTopic.id);
+          msgs2.push(botMsg);
+          saveMessages(currentTopic.id, msgs2);
+          renderMessages();
+        }, 800 + Math.random()*1200);
+      }
+    }
+
+    // avatar backgrounds
+    function randomAvatarBg(){
+      const colors = [
+        'linear-gradient(135deg,#9b59ff,#d77bff)',
+        'linear-gradient(135deg,#7ee3a6,#3be8ff)',
+        'linear-gradient(135deg,#ffd166,#ff7b7b)',
+        'linear-gradient(135deg,#6a9cff,#9bf7ff)',
+        'linear-gradient(135deg,#ffd1f2,#b28bff)'
+      ];
+      return colors[Math.floor(Math.random()*colors.length)];
+    }
+
+    // emoji spawning
+    function spawnFloatingEmoji(){
+      const el = document.createElement('div');
+      el.className = 'float-emoji';
+      el.style.left = Math.random()*100 + '%';
+      el.style.top = (50 + Math.random()*45) + '%';
+      el.style.fontSize = (14 + Math.random()*26) + 'px';
+      el.style.opacity = (0.6 + Math.random()*0.6);
+      const dur = 4000 + Math.random()*5000;
+      el.style.animationDuration = dur + 'ms';
+      el.textContent = randomEmoji();
+      emojiLayer.appendChild(el);
+      setTimeout(()=> { if(el && el.parentNode) el.parentNode.removeChild(el); }, dur + 250);
+    }
+    setInterval(() => {
+      const count = (Math.random() < 0.7) ? 1 : 2;
+      for(let i=0;i<count;i++) spawnFloatingEmoji();
+    }, 1100);
+
+    emojiBtn.addEventListener('click', () => {
+      inputEl.value += ' ' + randomEmoji() + ' ';
+      inputEl.focus();
+    });
+    moodSelect.addEventListener('change', () => {
+      if(moodSelect.value){
+        inputEl.value = moodSelect.value + ' ' + inputEl.value;
+        moodSelect.selectedIndex = 0;
+        inputEl.focus();
+      }
+    });
+
+    // seed more realistic samples and more people
+    function seedSamples(){
+      const messageTemplates = {
+        music: ['Just learned a cool chord progression 🎸','Any song recommendations for piano practice?','Recording tips for vocals?'],
+        pe: ['What drills do you use for endurance?','Best trainers for sprinting?','Anyone into rock climbing too?'],
+        dandt: ['Made a tiny wooden lamp 💡','3D printing plastics tips?','How did you approach your coursework?'],
+        art: ['Favourite paint brand?','Sketchbook suggestions?','I tried mixed media and loved it 🎨'],
+        drama: ['Monologue practice tips?','Lighting ideas for a school play?','Stage fright hacks?'],
+        cs: ['Anyone using Python for projects?','Resources to learn algorithms?','Cool idea: build a music visualizer 💻'],
+        ict: ['Best ways to learn Excel shortcuts?','Network basics resources?','Anyone built a website as coursework?'],
+        eng: ['Robotics club projects?','CAD tips for beginners','What microcontroller do you prefer?'],
+        maths: ['How to get better at algebra?','Favourite maths puzzle?','Tips for revising for exams 🔢'],
+        english: ['Book recommendations for GCSE/KS4?','Essay structure tips?','Favourite poem to study?'],
+        science: ['Lab report layout tips?','Cool experiments to try at home?','How to revise for physics?'],
+        history: ['Any podcasts for history buffs?','Good sources for primary documents?','Timeline memorisation tips?'],
+        geography: ['Fieldwork ideas?','Maps vs GIS basics?','Climate change projects? 🌍'],
+        languages: ['Best apps to practise vocabulary?','How to remember verb conjugations?','Penpal ideas?'],
+        economics: ['Supply & demand explained simply?','Resources for macro basics?','Project ideas involving local economy?']
+      };
+
+      TOPICS.forEach(t => {
+        if(!localStorage.getItem(storageKey(t.id))){
+          const pool = messageTemplates[t.id] || [`Hello from ${t.label}!`, `What do you like about ${t.label}?`];
+          const sample = [];
+          // add 3 sample messages with random people
+          for(let i=0;i<3;i++){
+            const name = randomFrom(SAMPLE_PEOPLE);
+            sample.push({
+              id: Date.now() + i,
+              name,
+              text: randomFrom(pool) + ' ' + randomEmoji(),
+              time: timeNow(),
+              font: randomFrom(['Poppins','Montserrat','Space Mono']),
+              avatarBg: randomAvatarBg()
+            });
+          }
+          saveMessages(t.id, sample);
+        }
+      });
+    }
+    seedSamples();
+
+    // people listing
+    renderPeople();
+
+    // initial render of topics and select first topic
+    renderTopicChips();
+    openTopic(TOPICS[0].id);
+
+    // accessibility and small shortcuts
+    messagesEl.addEventListener('click', () => inputEl.focus());
+    inputEl.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter' && !e.shiftKey){
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // keyboard nav numbers 1..N
+    document.addEventListener('keydown', (e) => {
+      if(document.activeElement === inputEl) return;
+      const n = parseInt(e.key);
+      if(n >= 1 && n <= TOPICS.length){
+        openTopic(TOPICS[n-1].id);
+      }
+    });
+
+    // small initial burst of emojis
+    for(let i=0;i<8;i++) setTimeout(spawnFloatingEmoji, i*120);
+
+    // render selected tags initially
+    renderSelectedTags();
+
+    // toast helper
+    let toastTimeout = null;
+    function showToast(msg, ms = 2500){
+      const existing = document.querySelector('.toast');
+      if(existing) existing.remove();
+      const t = document.createElement('div');
+      t.className = 'toast';
+      t.textContent = msg;
+      document.body.appendChild(t);
+      if(toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(()=> {
+        t.classList.add('fadeout');
+        setTimeout(()=> t.remove(), 350);
+      }, ms);
+    }
+
+    // small animation when trying to select too many handled in toggleInterest
+
+    // expose for debugging (optional)
+    window._studioChat = {
+      TOPICS, SAMPLE_PEOPLE, loadMessages, saveMessages
+    };
+  })();
+  </script>
+</body>
+</html>

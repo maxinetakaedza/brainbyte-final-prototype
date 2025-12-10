@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrainByte - Classroom</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #6a11cb;
+      --secondary: #00bfff;
+      --dark: #0f0c29;
+      --darker: #0a081a;
+      --card-bg: rgba(255, 255, 255, 0.08);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+    body {
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: white;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 20px; }
+    .logo span { background: linear-gradient(90deg, var(--secondary), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .announcement { background: rgba(74,56,255,0.15); padding: 16px; border-radius: 12px; margin: 12px 0; }
+    .announcement h4 { margin: 0 0 8px 0; color: var(--secondary); }
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .student-card {
+      background: rgba(0,0,0,0.3);
+      padding: 14px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ccc; }
+    .back { display: block; margin-top: 20px; color: var(--secondary); text-align: center; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🧠 <span>BrainByte</span></div>
+    
+    <div class="card">
+      <div class="class-header">
+        <h2>🏫 Class: Grade 10B (Math)</h2>
+        <span style="background:var(--primary); padding:4px 12px; border-radius:20px; font-size:0.9rem;">24 Students</span>
+      </div>
+
+      <div class="announcement">
+        <h4><i class="fas fa-bullhorn"></i> Announcement</h4>
+        <p>"Complete the Algebra Quiz by Friday! Top 3 get 50 BrainBytes."</p>
+        <button class="btn btn-secondary" onclick="alert('✅ Quiz assigned!')">Assign Quiz</button>
+      </div>
+
+      <h3>Recent Activity</h3>
+      <ul style="padding-left:20px; color:#ccc; margin:12px 0;">
+        <li>Alex J. completed "Linear Equations" — ★★★★☆</li>
+        <li>Chipo M. bought "Quadratic Pack"</li>
+        <li>Tariro K. attended tutoring session</li>
+      </ul>
+
+      <h3>Students</h3>
+      <div class="student-grid">
+        <div class="student-card">
+          <div>🧑‍🎓 Alex J.</div>
+          <small>XP: 4280</small>
+          <button class="btn btn-primary" style="width:100%; margin-top:6px;">Message</button>
+        </div>
+        <div class="student-card">
+          <div>🧑‍🎓 Chipo M.</div>
+          <small>XP: 3150</small>
+          <button class="btn btn-primary" style="width:100%; margin-top:6px;">Message</button>
+        </div>
+        <div class="student-card">
+          <div>🧑‍🎓 Tariro K.</div>
+          <small>XP: 2900</small>
+          <button class="btn btn-primary" style="width:100%; margin-top:6px;">Message</button>
+        </div>
+      </div>
+    </div>
+
+    <a href="hub.html" class="back">← Back to Hub</a>
+  </div>
+</body>
+</html>

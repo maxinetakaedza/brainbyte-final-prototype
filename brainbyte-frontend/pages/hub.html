@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrainByte - Hub</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #0a081a, #0f0c29);
+      color: white;
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .logo { font-size: 2.5rem; margin: 20px 0; text-align: center; }
+    .portals {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+      max-width: 1000px;
+      margin-top: 20px;
+    }
+    .portal {
+      background: rgba(255,255,255,0.08);
+      padding: 20px;
+      border-radius: 16px;
+      text-align: center;
+      text-decoration: none;
+      color: white;
+      font-weight: bold;
+      transition: transform 0.2s;
+    }
+    .portal:hover { transform: scale(1.03); background: rgba(106,17,203,0.3); }
+  </style>
+</head>
+<body>
+  <div class="logo">🧠 BrainByte</div>
+  <div class="portals">
+    <a href="study_session.html" class="portal">📚 Study Session</a>
+    <a href="quizzes.html" class="portal">🧪 Quizzes</a>
+    <a href="games.html" class="portal">🎮 Games</a>
+    <a href="marketplace.html" class="portal">🛒 Marketplace</a>
+    <a href="wallet.html" class="portal">💰 Wallet</a>
+    <a href="class_portal.html" class="portal">🏫 Classroom</a>
+    <a href="revision_packs.html" class="portal">📦 Revision Packs</a>
+    <a href="interests_chatroom.html" class="portal">💬 Chat Rooms</a>
+    <a href="profile.html" class="portal">👤 Profile</a>
+  </div>
+</body>
+</html>

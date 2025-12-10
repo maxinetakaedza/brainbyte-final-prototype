@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>F1 EduGame — Game with Badges, Brainbits & Leaderboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+    html,body{height:100%;margin:0;font-family:'Poppins',sans-serif;background:#dbefff;color:#0b2433;}
+    .wrap{height:100vh;display:flex;align-items:stretch;justify-content:stretch;overflow:hidden;}
+    canvas{display:block;flex:1;width:100%;height:100%;background:transparent;}
+
+    /* HUD / lesson / gamify styles */
+    .hud-top-left{position:fixed;left:12px;top:12px;width:320px;background:rgba(255,255,255,0.95);padding:10px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,0.10);font-size:13px;color:#0b2433;z-index:1100}
+    .lesson-panel{position:fixed;right:12px;top:12px;width:320px;background:rgba(255,255,255,0.98);padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.12);font-size:13px;color:#0b2433;z-index:1000}
+    .gamify-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:460px;max-width:96%;background:rgba(255,255,255,0.98);border-radius:12px;padding:8px 12px;box-shadow:0 8px 24px rgba(0,0,0,0.12);display:flex;align-items:center;gap:12px;font-size:13px;z-index:1200}
+    .gamify-expanded{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;width:920px;max-width:96%;height:360px;background:rgba(255,255,255,0.98);border-radius:12px;padding:12px;box-shadow:0 8px 36px rgba(0,0,0,0.14);z-index:1300;display:flex;gap:12px;overflow:hidden}
+    .profile-panel{flex:1;overflow:auto;padding:12px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(0,0,0,0.04)}
+    .profile{width:240px;flex-shrink:0;padding:8px;border-radius:8px;background:#fff;border:1px solid rgba(0,0,0,0.04)}
+    .small-muted{font-size:12px;color:#6b7e86}
+    .choice-btn{background:#fff;color:#0b2433;border:1px solid rgba(0,0,0,0.06);padding:8px;border-radius:8px;text-align:left;cursor:pointer}
+    .choice-btn.correct{border-color:#2ecc71;background:#ecf9f0}
+    .choice-btn.wrong{border-color:#ff6b6b;background:#ffecec}
+    .btn-primary{background:#2d9cff;color:white;border:0;padding:6px 8px;border-radius:8px;cursor:pointer}
+    .close-gamify{background:#ff6b6b;padding:6px 8px;border-radius:8px;color:#fff;border:0;cursor:pointer}
+    .hidden{display:none}
+    .badge{display:inline-block;padding:6px 8px;border-radius:999px;background:linear-gradient(90deg,#ffd27a,#ff9ba8);font-size:12px;margin:4px 4px 0 0}
+    .achievement{margin-top:8px;padding:8px;border-radius:8px;background:#f2f9ff;border:1px solid rgba(0,0,0,0.04)}
+    .toast{position:fixed;right:18px;bottom:92px;background:rgba(20,20,20,0.9);color:#fff;padding:10px 14px;border-radius:8px;z-index:1600;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+    button[disabled]{opacity:0.52;cursor:not-allowed}
+    .leaderboard{flex:1;overflow:auto;padding:6px;border-radius:8px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(0,0,0,0.04)}
+    .lb-row{display:flex;justify-content:space-between;padding:8px;border-bottom:1px solid rgba(0,0,0,0.04);font-size:13px}
+    .lb-controls{display:flex;gap:8px;margin-top:8px}
+    /* simple responsive */
+    @media (max-width:900px){
+      .gamify-expanded{width:calc(100% - 24px);height:420px;flex-direction:column;left:12px;transform:none}
+      .profile{width:100%}
+      .gamify-bar{width:96%}
+    }
+
+    /* Modal leaderboard (dark) */
+    #leaderboardModal{position:fixed;inset:0;background:rgba(6,6,10,0.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:2000}
+    #leaderboardModal .card{width:100%;max-width:980px;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.6);background:#12001f;color:#efe8ff;padding:18px}
+    #leaderboardModal .row{display:flex;gap:12px;padding:12px;border-bottom:1px solid rgba(255,255,255,0.03);align-items:center}
+    #leaderboardModal .row.header{font-weight:700}
+    #leaderboardModal .col-1{width:46px;flex-shrink:0}
+    #leaderboardModal .col-2{flex:1}
+    #leaderboardModal .col-3{width:150px;text-align:right}
+    #leaderboardModal .muted{color:#bda7d6;font-size:13px}
+    #leaderboardModal .controls{margin-top:12px;display:flex;gap:8px}
+    #leaderboardModal button{padding:8px 10px;border-radius:8px;border:0;background:#7b61ff;color:#fff;cursor:pointer}
+    #leaderboardModal .close-modal{position:absolute;right:18px;top:18px;background:transparent;border:0;color:#ffd7f0;font-size:20px;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <canvas id="gameCanvas" aria-label="F1 EduGame canvas"></canvas>
+  </div>
+
+  <div class="hud-top-left" id="hud">
+    <div style="font-weight:700">F1 EduGame</div>
+    <div style="font-size:12px;color:#47626f;margin-top:6px">Press R or click Next Level to advance. Player car is first. Complete lessons to move forward.</div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+      <button id="nextLevelBtn" style="background:#ff8a00;color:#fff;border:0;padding:6px 8px;border-radius:8px;cursor:pointer">Next Level (R)</button>
+      <div style="margin-left:auto;font-size:12px;color:#607b86">Level: <span id="hudLevel">Primary</span></div>
+    </div>
+    <div style="margin-top:8px;font-size:12px;color:#607b86">Stage: <span id="hudStage">0</span></div>
+    <div style="margin-top:8px;display:flex;gap:6px;">
+      <button id="startRaceBtn" style="background:#2d9cff;color:#fff;border:0;padding:6px 8px;border-radius:8px;cursor:pointer">Start Race</button>
+      <div style="align-self:center;font-size:12px;color:#607b86">State: <span id="hudState">Idle</span></div>
+    </div>
+  </div>
+
+  <div class="lesson-panel" id="lessonPanel" aria-live="polite">
+    <div style="font-weight:700">Lesson & Challenge <span style="display:inline-block;padding:4px 8px;border-radius:999px;background:#2d9cff;color:#fff;margin-left:6px">You</span></div>
+    <div id="lessonSelectArea">
+      <div style="font-size:12px;color:#47626f">Choose level & subject, then press Start Lesson:</div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <select id="levelSelect" style="flex:0 0 130px;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08)">
+          <option value="primary">Primary</option>
+          <option value="secondary">Secondary</option>
+        </select>
+        <select id="subjectSelect" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08)">
+          <option value="math">Math — Fractions</option>
+          <option value="science">Science — Gravity</option>
+          <option value="history">History — Explorers</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="startLessonBtn">Start Lesson</button>
+        <button id="skipLessonBtn" class="btn-primary">Skip + Move (Premium — 400 Brainbits)</button>
+      </div>
+    </div>
+
+    <div id="questionArea" class="hidden" style="margin-top:8px">
+      <div id="questionText" style="font-size:13px;margin-bottom:8px"></div>
+      <div class="choices" id="choices"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="nextQBtn" style="display:none">Next Question</button>
+        <button id="closeLessonBtn" class="btn-primary" style="background:#4caf50">Close</button>
+      </div>
+      <div id="lessonFeedback" style="font-size:12px;color:#607b86;margin-top:6px"></div>
+    </div>
+  </div>
+
+  <!-- Gamification bottom bar -->
+  <div id="gamifyBar" class="gamify-bar" aria-hidden="false">
+    <div id="gamifyToggle" style="display:flex;gap:10px;align-items:center;flex:1;cursor:pointer">
+      <div style="font-weight:700">XP: <span id="uiXp">0</span></div>
+      <div style="font-weight:700;margin-left:8px">Points: <span id="uiPoints">0</span></div>
+      <div style="font-weight:700;margin-left:8px">Brainbits: <span id="uiBrainbits">0</span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="openProfile" class="btn-primary">Profile</button>
+      <button id="openLeaderboard" class="btn-primary" style="background:#6b5cff">Leaderboard</button>
+    </div>
+  </div>
+
+  <!-- Expanded gamify panel (profile / badges / leaderboard snippet) -->
+  <div id="gamifyExpanded" class="gamify-expanded hidden" aria-hidden="true">
+    <div class="profile-panel">
+      <div style="font-weight:700">Your Achievements</div>
+      <div style="margin-top:8px" id="achievementsList"></div>
+
+      <div style="margin-top:12px">
+        <div style="font-weight:700;margin-bottom:6px">Recent Activity</div>
+        <div id="recentActivity" class="small-muted">No activity yet</div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div style="font-weight:700;margin-bottom:6px">Stats</div>
+        <div class="achievement">XP: <strong id="panelXp">0</strong></div>
+        <div class="achievement">Points: <strong id="panelPoints">0</strong></div>
+        <div class="achievement">Wins: <strong id="panelWins">0</strong></div>
+        <div class="achievement">Completed Races: <strong id="panelCompleted">0</strong></div>
+        <div class="achievement">Brainbits: <strong id="panelBrainbits">0</strong></div>
+      </div>
+    </div>
+
+    <div class="profile">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:700">Badges</div>
+          <div class="small-muted">Earn badges as you progress</div>
+        </div>
+        <button id="closeGamify" class="close-gamify">Close</button>
+      </div>
+      <div style="margin-top:12px">
+        <div id="badgesList" style="min-height:34px"></div>
+        <div style="margin-top:12px">
+          <button id="clearLocalBtn" class="btn-primary" style="background:#ff6b6b">Clear Local</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard modal (dark themed) -->
+  <div id="leaderboardModal" role="dialog" aria-modal="true">
+    <div class="card" aria-labelledby="lbTitle" style="position:relative">
+      <button class="close-modal" id="closeLeaderboardModal" aria-label="Close leaderboard">&times;</button>
+      <h2 id="lbTitle" style="margin:0 0 10px 0">Leaderboard</h2>
+
+      <div class="leaderboard" id="leaderboardList" style="min-height:220px"></div>
+
+      <div class="lb-controls">
+        <input id="playerNameInput" placeholder="Your name" style="flex:1;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#efe8ff" />
+        <button id="submitScoreBtn" style="background:#7b61ff;color:#fff;border:0;padding:8px;border-radius:8px">Submit</button>
+        <button id="exportBtn" style="background:#4caf50;color:#fff;border:0;padding:8px;border-radius:8px">Export</button>
+      </div>
+
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="clearLeaderboardBtn" style="background:#ff6b6b;color:#fff;border:0;padding:8px;border-radius:8px">Clear Local</button>
+        <div class="small-muted" style="margin-left:auto">Local leaderboard is stored in your browser</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" aria-hidden="true"></div>
+
+<script>
+/* Game with badges, brainbits & leaderboard
+   - Skip + Move remains premium (400 Brainbits)
+   - Added a leaderboard modal that merges local submissions with generated entries
+   - Local leaderboard stored under same gamify state (GAMIFY_KEY)
+*/
+
+/* ---------- Config & helpers ---------- */
+const LEVELS = ['primary','secondary'];
+let currentLevelIndex = 0;
+let difficultyStage = 0;
+
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+let W = 800, H = 600;
+let dpr = Math.max(1, window.devicePixelRatio || 1);
+let lastTime = 0, t = 0;
+
+const ROAD_TOP_RATIO = 0.58;
+const FINISH_THRESHOLD = 100;
+const SKIP_COST = 400; // cost in brainbits for premium Skip + Move
+
+function randRange(a,b){ return a + Math.random()*(b-a); }
+function randInt(a,b){ return Math.floor(a + Math.random()*(b-a+1)); }
+function capitalize(s){ return s.charAt(0).toUpperCase() + s.slice(1); }
+
+/* ---------------- Game state & cars ---------------- */
+let raceState = 'idle'; // 'idle'|'countdown'|'running'
+let countdown = 0;
+let raceWinnerIndex = null;
+
+const CAR_COLORS = ['#2d9cff','#28c76f','#ff8a00','#9b59b6'];
+const cars = Array.from({length:4}, (_,i) => ({
+  id: 'car' + (i+1),
+  name: i===0 ? 'You' : 'Bot ' + i,
+  color: CAR_COLORS[i%CAR_COLORS.length],
+  pos: 0,
+  auto: i===0 ? false : true,
+  finished: false,
+  botTimer: 0,
+  botMean: 3.6,
+  botAdvanceMin: 7,
+  botAdvanceMax: 12,
+  botCorrectProb: 0.8
+}));
+
+/* ---------- Question banks ---------- */
+const QUESTION_BANK = {
+  primary: {
+    math: [
+      { q: "What is 1/2 + 1/4?", choices:["1/4","3/4","1","2/3"], a:1 },
+      { q: "Which is 1/3 as a decimal?", choices:["0.2","0.33","0.4","0.75"], a:1 }
+    ],
+    science: [
+      { q: "What pulls objects toward Earth?", choices:["Magnetism","Gravity","Wind"], a:1 },
+      { q: "Which falls faster in air: rock or feather?", choices:["Rock","Feather","Same"], a:0 }
+    ],
+    history: [
+      { q: "Who sailed in 1492?", choices:["Columbus","Cook","Magellan"], a:0 },
+      { q: "People used maps to find...?", choices:["Food","Places","Sleep"], a:1 }
+    ]
+  },
+  secondary: {
+    math: [
+      { q: "Solve: 3/4 ÷ 1/8 = ?", choices:["6","2","8","0.625"], a:2 },
+      { q: "What is the LCM of 12 and 15?", choices:["60","30","90","45"], a:0 }
+    ],
+    science: [
+      { q: "Newton's 2nd law relates force to:", choices:["Mass & acceleration","Energy","Velocity"], a:0 },
+      { q: "What causes tides mostly?", choices:["Moon's gravity","Sunlight","Wind"], a:0 }
+    ],
+    history: [
+      { q: "Who completed the first circumnavigation of Earth?", choices:["Columbus","Magellan","Vasco da Gama"], a:1 },
+      { q: "The Enlightenment emphasized:", choices:["Religion over reason","Reason and science","Myth"], a:1 }
+    ]
+  }
+};
+
+/* ---------- Gamification (local) ---------- */
+const GAMIFY_KEY = 'f1_edugame_gamify_v2';
+const defaultGamifyState = {
+  xp:0,
+  points:0,
+  wins:0,
+  completedRaces:0,
+  brainbits:0,
+  badges:[],
+  recent: [],
+  leaderboard: []
+};
+let gamifyState = (function(){ try{ const raw = localStorage.getItem(GAMIFY_KEY); if(raw) return Object.assign({}, defaultGamifyState, JSON.parse(raw)); }catch(e){} return Object.assign({}, defaultGamifyState); })();
+
+function saveGamify(){ try{ localStorage.setItem(GAMIFY_KEY, JSON.stringify(gamifyState)); }catch(e){} }
+function awardXP(amount){ gamifyState.xp = (gamifyState.xp||0) + Math.floor(amount); pushRecent(`+${amount} XP`); saveGamify(); refreshGamifyUI(); }
+function awardPoints(amount){ gamifyState.points = (gamifyState.points||0) + Math.floor(amount); pushRecent(`+${amount} Points`); saveGamify(); refreshGamifyUI(); }
+function awardBrainbits(amount){ gamifyState.brainbits = (gamifyState.brainbits||0) + Math.floor(amount); pushRecent(`+${amount} Brainbits`); saveGamify(); refreshGamifyUI(); }
+function pushRecent(msg){
+  gamifyState.recent = gamifyState.recent || [];
+  gamifyState.recent.unshift({ msg, date: (new Date()).toISOString() });
+  while(gamifyState.recent.length>8) gamifyState.recent.pop();
+}
+function recordWinLocal(name='You'){
+  gamifyState.wins = (gamifyState.wins||0) + 1;
+  gamifyState.completedRaces = (gamifyState.completedRaces||0) + 1;
+  awardXP(10);
+  awardPoints(5);
+  awardBrainbits(5); // awarded for winner
+  pushRecent('Win recorded');
+  // create leaderboard entry for local user
+  gamifyState.leaderboard = gamifyState.leaderboard || [];
+  gamifyState.leaderboard.push({ name, points: gamifyState.points, xp: gamifyState.xp, wins: gamifyState.wins, brainbits: gamifyState.brainbits, date: (new Date()).toISOString() });
+  saveGamify();
+  refreshGamifyUI();
+  checkBadges();
+}
+
+/* When a player completes a race (even if not first), award brainbits once */
+function recordPlayerCompletion(){
+  // Ensure we count completed races for the player and award brainbits only once per completion
+  gamifyState.completedRaces = (gamifyState.completedRaces||0) + 1;
+  awardBrainbits(5); // award 5 brainbits for every completed race
+  pushRecent('Race completed');
+  saveGamify();
+  refreshGamifyUI();
+  checkBadges();
+}
+
+/* ---------- Badge & achievement helpers ---------- */
+function grantBadge(id, title, desc){
+  gamifyState.badges = gamifyState.badges || [];
+  if(gamifyState.badges.find(b=>b.id===id)) return;
+  const badge = { id, title, desc, date: (new Date()).toISOString() };
+  gamifyState.badges.push(badge);
+  saveGamify();
+  refreshGamifyUI();
+  showAchievementToast(`Badge earned: ${title}`);
+}
+function checkBadges(){
+  const w = gamifyState.wins || 0;
+  const c = gamifyState.completedRaces || 0;
+  const xp = gamifyState.xp || 0;
+
+  if(w >= 1) grantBadge('win-rookie','Rookie Winner','Win your first race');
+  if(w >= 5) grantBadge('win-speedster','Speedster','Win 5 races');
+  if(w >= 10) grantBadge('win-champion','Champion','Win 10 races');
+
+  if(c >= 1) grantBadge('complete-1','First Finish','Complete your first race');
+  if(c >= 5) grantBadge('complete-5','Persistent Racer','Complete 5 races');
+  if(c >= 20) grantBadge('complete-20','Seasoned Racer','Complete 20 races');
+
+  if(xp >= 200) grantBadge('xp-200','Knowledgeable','Earn 200 XP');
+}
+
+/* ---------- UI wiring ---------- */
+const hudLevelEl = document.getElementById('hudLevel');
+const hudStageEl = document.getElementById('hudStage');
+const hudStateEl = document.getElementById('hudState');
+const startRaceBtn = document.getElementById('startRaceBtn');
+const nextLevelBtn = document.getElementById('nextLevelBtn');
+
+const startLessonBtn = document.getElementById('startLessonBtn');
+const choicesEl = document.getElementById('choices');
+const questionText = document.getElementById('questionText');
+const nextQBtn = document.getElementById('nextQBtn');
+const closeLessonBtn = document.getElementById('closeLessonBtn');
+const lessonFeedback = document.getElementById('lessonFeedback');
+const skipLessonBtn = document.getElementById('skipLessonBtn');
+
+const gamifyToggle = document.getElementById('gamifyToggle');
+const gamifyBar = document.getElementById('gamifyBar');
+const gamifyExpanded = document.getElementById('gamifyExpanded');
+const closeGamify = document.getElementById('closeGamify');
+const openProfileBtn = document.getElementById('openProfile');
+const clearLocalBtn = document.getElementById('clearLocalBtn');
+
+const badgesListEl = document.getElementById('badgesList');
+const achievementsListEl = document.getElementById('achievementsList');
+const recentActivityEl = document.getElementById('recentActivity');
+
+const leaderboardModal = document.getElementById('leaderboardModal');
+const closeLeaderboardModal = document.getElementById('closeLeaderboardModal');
+const openLeaderboardBtn = document.getElementById('openLeaderboard');
+const leaderboardListEl = document.getElementById('leaderboardList');
+const playerNameInput = document.getElementById('playerNameInput');
+const submitScoreBtn = document.getElementById('submitScoreBtn');
+const exportBtn = document.getElementById('exportBtn');
+const clearLeaderboardBtn = document.getElementById('clearLeaderboardBtn');
+
+/* ---------- leaderboard helpers ---------- */
+function makeFakeEntries(){
+  // Cute names with emojis and fake xp/points — these are for demo only
+  return [
+    { name: "Panda🐼", points: randInt(50,480), xp: randInt(200,3200), wins: randInt(1,25), brainbits: randInt(10,400), date: new Date(Date.now()-randInt(2,40)*86400000).toISOString() },
+    { name: "Star✨", points: randInt(30,420), xp: randInt(150,2800), wins: randInt(0,20), brainbits: randInt(5,320), date: new Date(Date.now()-randInt(1,30)*86400000).toISOString() },
+    { name: "Mochi🧋", points: randInt(20,380), xp: randInt(120,2500), wins: randInt(0,18), brainbits: randInt(2,290), date: new Date(Date.now()-randInt(3,20)*86400000).toISOString() },
+    { name: "Bunny🐰", points: randInt(10,300), xp: randInt(80,1800), wins: randInt(0,12), brainbits: randInt(0,200), date: new Date(Date.now()-randInt(4,16)*86400000).toISOString() },
+    { name: "Kiki🦄", points: randInt(5,260), xp: randInt(50,1400), wins: randInt(0,10), brainbits: randInt(0,160), date: new Date(Date.now()-randInt(1,10)*86400000).toISOString() }
+  ];
+}
+
+function buildMergedLeaderboard(){
+  const local = (gamifyState.leaderboard || []).slice();
+  const fake = makeFakeEntries();
+  const usedNames = new Set(local.map(e=>e.name));
+  const merged = local.concat(fake.filter(f => !usedNames.has(f.name)));
+  merged.sort((a,b) => (b.points||0)-(a.points||0) || (b.xp||0)-(a.xp||0));
+  return merged;
+}
+
+function renderLeaderboard(){
+  if(!leaderboardListEl) return;
+  leaderboardListEl.innerHTML = '';
+  const list = buildMergedLeaderboard();
+  if(!list.length){
+    leaderboardListEl.innerHTML = '<div class="small-muted" style="padding:12px">No entries yet</div>';
+    return;
+  }
+  list.forEach((r,i)=>{
+    const el = document.createElement('div');
+    el.className = 'lb-row';
+    el.innerHTML = `<div style="display:flex;gap:8px;align-items:center"><div style="width:28px;height:28px;border-radius:6px;background:#eee;display:flex;align-items:center;justify-content:center;font-weight:700">${i+1}</div><div><div style="font-weight:700">${escapeHtml(r.name||'Anon')}</div><div class="small-muted">${new Date(r.date).toLocaleString()}</div></div></div><div style="text-align:right"><div>Pts <strong>${r.points||0}</strong></div><div>XP <strong>${r.xp||0}</strong></div></div>`;
+    leaderboardListEl.appendChild(el);
+  });
+}
+
+/* ---------- leaderboard UI wiring ---------- */
+openLeaderboardBtn && openLeaderboardBtn.addEventListener('click', ()=>{ leaderboardModal.style.display = 'flex'; renderLeaderboard(); });
+closeLeaderboardModal && closeLeaderboardModal.addEventListener('click', ()=>{ leaderboardModal.style.display = 'none'; });
+submitScoreBtn && submitScoreBtn.addEventListener('click', ()=>{
+  const name = (playerNameInput.value || 'Player').trim().slice(0,40);
+  if(!name) return showTemporaryPanelNotice('Enter a name to submit');
+  gamifyState.leaderboard = gamifyState.leaderboard || [];
+  gamifyState.leaderboard.push({ name, points: gamifyState.points || 0, xp: gamifyState.xp || 0, wins: gamifyState.wins || 0, brainbits: gamifyState.brainbits || 0, date: (new Date()).toISOString() });
+  saveGamify();
+  renderLeaderboard();
+  showTemporaryPanelNotice('Score saved locally');
+});
+exportBtn && exportBtn.addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(gamifyState.leaderboard || [], null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'f1_leaderboard.json'; document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+clearLeaderboardBtn && clearLeaderboardBtn.addEventListener('click', ()=>{
+  if(!confirm('Clear local leaderboard entries?')) return;
+  gamifyState.leaderboard = [];
+  saveGamify();
+  renderLeaderboard();
+  refreshGamifyUI();
+});
+
+/* ---------- Skip (Premium) wiring ---------- */
+function updateSkipButtonState(){
+  if(!skipLessonBtn) return;
+  const enough = (gamifyState.brainbits || 0) >= SKIP_COST;
+  skipLessonBtn.disabled = !enough;
+  skipLessonBtn.title = enough ? `Spend ${SKIP_COST} Brainbits to skip` : `Requires ${SKIP_COST} Brainbits`;
+}
+skipLessonBtn && skipLessonBtn.addEventListener('click', ()=>{
+  if(!skipLessonBtn) return;
+  const cost = SKIP_COST;
+  const available = gamifyState.brainbits || 0;
+  if(available < cost){
+    showTemporaryPanelNotice(`Skip costs ${cost} Brainbits. You have ${available}.`);
+    return;
+  }
+  if(!confirm(`Spend ${cost} Brainbits to skip this lesson and advance ${skipAdvanceForStage(difficultyStage)}%?`)) return;
+  gamifyState.brainbits = Math.max(0, (gamifyState.brainbits||0) - cost);
+  pushRecent(`Skipped lesson (-${cost} Brainbits)`);
+  saveGamify();
+  const skipAmt = skipAdvanceForStage(difficultyStage);
+  advancePlayer(skipAmt);
+  showTemporaryPanelNotice(`Skipped: +${skipAmt}% (-${cost} Brainbits)`);
+  refreshGamifyUI();
+});
+
+/* ---------- other UI & game wiring (lessons, input, confetti, update loop, draw) ---------- */
+/* For brevity we keep the same core game code as before (sizey, working). The important additions above are:
+   - leaderboard modal + rendering
+   - skip premium gating & cost
+   - local leaderboard storage under gamifyState.leaderboard
+*/
+
+function ensureCanvasSize(){
+  const rect = canvas.getBoundingClientRect();
+  W = Math.max(300, rect.width);
+  H = Math.max(300, rect.height);
+  dpr = Math.max(1, window.devicePixelRatio || 1);
+  canvas.width = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener('resize', ()=>{ ensureCanvasSize(); initClouds(); });
+ensureCanvasSize();
+
+let clouds = [];
+function initClouds(){ clouds=[]; for(let i=0;i<10;i++) clouds.push({ x: Math.random()*(W+600)-300, y:40+Math.random()*140, speed:0.05+Math.random()*0.45, scale:0.6+Math.random()*0.9, alpha:0.45+Math.random()*0.45 }); }
+initClouds();
+
+function applyLevelToBots(){
+  const level = LEVELS[currentLevelIndex];
+  for(let i=1;i<cars.length;i++){
+    const bot = cars[i];
+    if(level==='primary'){ bot.botMean = 3.2 + (i*0.2); bot.botCorrectProb = 0.85 - (i*0.03); bot.botAdvanceMin = 8; bot.botAdvanceMax = 12; }
+    else { bot.botMean = 3.8 + (i*0.25); bot.botCorrectProb = 0.72 - (i*0.03); bot.botAdvanceMin = 7; bot.botAdvanceMax = 11; }
+    const speedMultiplier = 1 + (difficultyStage * 0.08);
+    bot.botMean = Math.max(0.6, bot.botMean / speedMultiplier);
+    bot.botCorrectProb = Math.max(0.5, bot.botCorrectProb - (difficultyStage * 0.03));
+    bot.botAdvanceMin = Math.max(5, Math.round(bot.botAdvanceMin + (difficultyStage * 1)));
+    bot.botAdvanceMax = Math.max(bot.botAdvanceMin, Math.round(bot.botAdvanceMax + (difficultyStage * 1.5)));
+    bot.botTimer = randRange(0.5, bot.botMean);
+  }
+  hudLevelEl.textContent = capitalize(LEVELS[currentLevelIndex]);
+  hudStageEl.textContent = String(difficultyStage);
+}
+
+function restartRace(){
+  cars.forEach((c,idx)=>{ c.pos=0; c.finished=false; c.auto = idx===0?false:true; c.botTimer = randRange(0.5, c.botMean || 2.5); });
+  raceState='idle'; countdown=0; raceWinnerIndex=null; confettiParticles=[]; confettiActive=false; confettiTimer=0;
+  updateHUDState();
+  document.getElementById('questionArea').classList.add('hidden');
+  document.getElementById('lessonSelectArea').style.display='block';
+  lessonFeedback.textContent='';
+}
+nextLevelBtn.addEventListener('click', ()=>{ difficultyStage +=1; currentLevelIndex = (currentLevelIndex+1)%LEVELS.length; applyLevelToBots(); restartRace(); });
+window.addEventListener('keydown', (e)=>{ if(e.key==='r' || e.key==='R'){ difficultyStage +=1; currentLevelIndex = (currentLevelIndex+1)%LEVELS.length; applyLevelToBots(); restartRace(); }});
+startRaceBtn.addEventListener('click', ()=>{ if(raceState==='running'||raceState==='countdown') return; raceState='countdown'; countdown=3.0; updateHUDState(); });
+
+function updateHUDState(){ hudStateEl.textContent = raceState.charAt(0).toUpperCase() + raceState.slice(1); }
+
+function playerAdvanceForStage(stage){ return Math.max(8, 15 - stage*2); }
+function skipAdvanceForStage(stage){ return Math.max(4, 6 - Math.floor(stage/1)); }
+function pickQuestion(level, subject){
+  const effectiveLevel = difficultyStage >= 1 ? 'secondary' : level;
+  const pool = (QUESTION_BANK[effectiveLevel] && QUESTION_BANK[effectiveLevel][subject]) || [];
+  if(!pool.length) return null;
+  return Object.assign({}, pool[Math.floor(Math.random()*pool.length)]);
+}
+
+let currentQuestion = null;
+let awaitingNext = false;
+
+startLessonBtn.addEventListener('click', ()=>{
+  const subject = subjectSelect.value || 'math';
+  const q = pickQuestion(LEVELS[currentLevelIndex], subject);
+  if(q){
+    currentQuestion = q; questionText.textContent = q.q; choicesEl.innerHTML='';
+    q.choices.forEach((c,i)=>{ const b=document.createElement('button'); b.className='choice-btn'; b.textContent=c; b.onclick=()=>handleChoice(i); choicesEl.appendChild(b); });
+    document.getElementById('lessonSelectArea').style.display='none';
+    document.getElementById('questionArea').classList.remove('hidden');
+    nextQBtn.style.display='none';
+  }
+});
+nextQBtn.addEventListener('click', ()=>{ const q = pickQuestion(LEVELS[currentLevelIndex], subjectSelect.value || 'math'); if(q){ currentQuestion=q; questionText.textContent=q.q; choicesEl.innerHTML=''; q.choices.forEach((c,i)=>{ const b=document.createElement('button'); b.className='choice-btn'; b.textContent=c; b.onclick=()=>handleChoice(i); choicesEl.appendChild(b); }); }});
+closeLessonBtn.addEventListener('click', ()=>{ document.getElementById('questionArea').classList.add('hidden'); document.getElementById('lessonSelectArea').style.display='block'; lessonFeedback.textContent=''; });
+
+function handleChoice(choiceIndex){
+  if(!currentQuestion) return;
+  if(awaitingNext) return;
+  awaitingNext = true;
+  const correct = choiceIndex === currentQuestion.a;
+  const buttons = Array.from(choicesEl.children);
+  buttons.forEach((b,idx)=>{ b.disabled=true; if(idx===currentQuestion.a) b.classList.add('correct'); if(idx===choiceIndex && idx!==currentQuestion.a) b.classList.add('wrong'); });
+  if(correct){ const amt = playerAdvanceForStage(difficultyStage); advancePlayer(amt); showTemporaryMessage(`Correct! +${amt}%`); }
+  else showTemporaryMessage('Not quite. Keep trying.');
+  nextQBtn.style.display='inline-block';
+  awaitingNext=false;
+}
+
+function showTemporaryMessage(msg,d=2000){ lessonFeedback.textContent = msg; setTimeout(()=>{ if(lessonFeedback.textContent === msg) lessonFeedback.textContent=''; }, d); }
+
+function advancePlayer(amount){
+  const player = cars[0];
+  if(player.finished) return;
+  player.pos = Math.min(FINISH_THRESHOLD, player.pos + amount);
+  if(player.pos >= FINISH_THRESHOLD){
+    player.pos = FINISH_THRESHOLD;
+    if(!player.finished){
+      player.finished = true;
+      player.auto = false;
+      if(raceWinnerIndex === null){
+        handleWinner(0);
+      } else {
+        recordPlayerCompletion();
+      }
+    }
+  }
+}
+
+/* ---------- Pointer input ---------- */
+function layoutForRoad(){
+  const roadTop = H * ROAD_TOP_RATIO; const roadHeight = H - roadTop;
+  const usable = Math.max(120, roadHeight * 0.6); const n = cars.length;
+  const spacing = Math.min(80, Math.max(36, usable / n)); const centerY = roadTop + roadHeight * 0.18;
+  return { roadTop, roadHeight, spacing, centerY };
+}
+
+let pointerDown=false, draggingCar=null, dragStartX=0, dragStartPos=0, dragMoved=false;
+function findCarAt(px,py){
+  const { spacing, centerY } = layoutForRoad(); const n = cars.length;
+  for(let i=0;i<n;i++){ const offset=(i-(n-1)/2)*spacing; const carX=(cars[i].pos/100)*W; const carY=centerY+offset; const w=92,h=38;
+    if(px>=carX - w/2 -8 && px <= carX + w/2 + 8 && py >= carY - h/2 -8 && py <= carY + h/2 + 18) return i;
+  } return -1;
+}
+function onPointerDown(e){ if(raceState!=='running') return; pointerDown=true; dragMoved=false; const p=(e.touches&&e.touches[0])?e.touches[0]:e; const rect=canvas.getBoundingClientRect(); const px=p.clientX-rect.left, py=p.clientY-rect.top; const idx=findCarAt(px,py); if(idx>=0){ draggingCar=idx; dragStartX=p.clientX; dragStartPos=cars[idx].pos; } else draggingCar=null; }
+function onPointerMove(e){ if(raceState!=='running') return; if(!pointerDown||draggingCar===null) return; const p=(e.touches&&e.touches[0])?e.touches[0]:e; const dx=p.clientX-dragStartX; const rect=canvas.getBoundingClientRect(); const pctDelta=(dx/rect.width)*100; const newPos=Math.max(0, Math.min(FINISH_THRESHOLD, dragStartPos + pctDelta)); if(Math.abs(pctDelta)>0.5) dragMoved=true; if(draggingCar===0){ cars[0].pos=newPos; if(newPos<FINISH_THRESHOLD) cars[0].finished=false; } }
+function onPointerUp(e){ if(raceState!=='running'){ pointerDown=false; draggingCar=null; dragMoved=false; return; } pointerDown=false; const p=(e.changedTouches&&e.changedTouches[0])?e.changedTouches[0]:e; const rect=canvas.getBoundingClientRect(); const clickX=p.clientX-rect.left, clickY=p.clientY-rect.top; if(draggingCar!==null){ if(!dragMoved){ if(draggingCar===0 && !cars[0].finished) subjectSelect.focus(); } else { if(draggingCar===0 && cars[0].pos>=FINISH_THRESHOLD){ cars[0].pos=FINISH_THRESHOLD; cars[0].finished=true; cars[0].auto=false; if(raceWinnerIndex === null) handleWinner(0); else recordPlayerCompletion(); } } } else { const idx=findCarAt(clickX,clickY); if(idx===0 && !dragMoved) subjectSelect.focus(); } draggingCar=null; dragMoved=false; }
+canvas.addEventListener('mousedown',onPointerDown); window.addEventListener('mousemove',onPointerMove); window.addEventListener('mouseup',onPointerUp);
+canvas.addEventListener('touchstart', function(e){ e.preventDefault(); onPointerDown(e); }, {passive:false});
+window.addEventListener('touchmove', function(e){ onPointerMove(e); }, {passive:true});
+window.addEventListener('touchend', function(e){ onPointerUp(e); }, {passive:true});
+
+/* ---------- Confetti ---------- */
+let confettiParticles = [], confettiActive=false, confettiTimer=0;
+function spawnConfettiForCar(carIndex){
+  const { spacing, centerY } = layoutForRoad(); const n=cars.length; const carX=(cars[carIndex].pos/100)*W; const offset=(carIndex-(n-1)/2)*spacing; const carY=centerY + offset;
+  const colors=['#ff4d4f','#ffd666','#36cfc9','#73d13d','#597ef7','#9254de'];
+  for(let i=0;i<80;i++){ const angle = randRange(-Math.PI/2 -0.7, -Math.PI/2 + 0.7); const speed = randRange(80,320);
+    confettiParticles.push({ x:carX + randRange(-20,20), y:carY - 12 + randRange(-10,10), vx: Math.cos(angle)*speed, vy: Math.sin(angle)*speed, size: randRange(6,12), rot: randRange(0,Math.PI*2), angularVel: randRange(-6,6), color: colors[Math.floor(Math.random()*colors.length)], life: randRange(1.2,2.6) });
+  }
+  confettiActive = true; confettiTimer = 3.0;
+}
+function updateConfetti(dt){ if(!confettiActive && confettiParticles.length===0) return; confettiTimer -= dt; for(let i=confettiParticles.length-1;i>=0;i--){ const p=confettiParticles[i]; p.vy += 600*dt; p.x += p.vx*dt; p.y += p.vy*dt; p.rot += p.angularVel*dt; p.life -= dt; p.vx *= 0.995; if(p.life<=0 || p.y>H+80) confettiParticles.splice(i,1); } if(confettiTimer<=0 && confettiParticles.length===0) confettiActive=false; }
+function drawConfetti(){ if(confettiParticles.length===0) return; ctx.save(); confettiParticles.forEach(p=>{ ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.color; ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*0.6); ctx.rotate(-p.rot); ctx.translate(-p.x,-p.y); }); ctx.restore(); }
+
+/* ---------- Winner handling & gamify integration ---------- */
+function handleWinner(idx){
+  if(raceWinnerIndex !== null) return;
+  raceWinnerIndex = idx; spawnConfettiForCar(idx);
+  if(idx === 0){
+    recordWinLocal('You'); // awards wins + brainbits and increments completedRaces and adds leaderboard entry
+    showAchievementToast('You won! +5 Brainbits awarded');
+  } else {
+    awardXP(8);
+    awardPoints(20);
+    showAchievementToast('Opponent won — keep trying!');
+  }
+}
+
+/* ---------- Update & draw loop ---------- */
+function update(dt){
+  t += dt;
+  clouds.forEach((c,i)=>{ c.x += c.speed*(1+0.1*i)*dt*60; if(c.x>W+300) c.x = -300 - Math.random()*200; });
+  if(raceState === 'countdown'){ countdown -= dt; if(countdown <= 0){ raceState = 'running'; updateHUDState(); for(let i=1;i<cars.length;i++) cars[i].botTimer = randRange(0.2, cars[i].botMean); } }
+  if(raceState === 'running'){ for(let i=1;i<cars.length;i++){ const bot = cars[i]; if(bot.finished) continue; bot.botTimer -= dt; if(bot.botTimer <= 0){ const correct = Math.random() < bot.botCorrectProb; if(correct) bot.pos = Math.min(FINISH_THRESHOLD, bot.pos + randInt(bot.botAdvanceMin, bot.botAdvanceMax)); else if(Math.random() < 0.2) bot.pos = Math.min(FINISH_THRESHOLD, bot.pos + Math.floor((bot.botAdvanceMin)/3)); if(bot.pos >= FINISH_THRESHOLD){ bot.pos = FINISH_THRESHOLD; bot.finished = true; bot.auto = false; handleWinner(i); } bot.botTimer = randRange(Math.max(0.6, bot.botMean*0.5), bot.botMean*1.2); } } }
+  if(cars[0].pos >= FINISH_THRESHOLD && raceWinnerIndex === null && !cars[0].finished){ cars[0].pos = FINISH_THRESHOLD; cars[0].finished = true; cars[0].auto = false; handleWinner(0); }
+  updateConfetti(dt);
+}
+function draw(){
+  const day = (Math.sin(t*0.25)+1)/2;
+  const topR = Math.round(20+160*day), topG = Math.round(40+150*day), topB = Math.round(80+140*day);
+  const botR = Math.round(120+40*day), botG = Math.round(200+30*day), botB = Math.round(240);
+  const grad = ctx.createLinearGradient(0,0,W,H*0.6); grad.addColorStop(0, `rgb(${topR},${topG},${topB})`); grad.addColorStop(1, `rgb(${botR},${botG},${botB})`);
+  ctx.fillStyle = grad; ctx.fillRect(0,0,W,H);
+
+  const sunX = (t*40)%(W+200)-100; const sunY = 80 + Math.sin(t*0.12)*26;
+  ctx.beginPath(); ctx.fillStyle = day>0.4 ? 'rgba(255,230,120,0.95)' : 'rgba(220,230,255,0.9)'; ctx.arc(sunX,sunY,26,0,Math.PI*2); ctx.fill();
+  clouds.forEach((c,i)=> drawCloud(c.x, c.y + Math.sin(t*0.6 + i)*6, 70*c.scale, c.alpha) );
+
+  drawHills(); const roadTop = drawRoad(); drawCenterLine(roadTop); drawLowBushes(roadTop);
+
+  const startX = 24; const startY = roadTop + (H - roadTop)*0.45 - 40; const waving = (raceState === 'countdown') ? (t*6) : (t*0.6);
+  drawFlagAtStart(startX, startY, 1.0, waving);
+
+  const { spacing, centerY } = layoutForRoad(); const n = cars.length;
+  cars.forEach((car,i)=>{ const offset = (i-(n-1)/2)*spacing; const carX=(car.pos/100)*W; const carY=centerY+offset; drawCar(carX,carY,car.color,(i===0 && !car.finished && !car.auto),car.finished,i===0); });
+
+  drawConfetti();
+  if(raceState==='countdown') drawCountdownOverlay();
+
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='12px Poppins, sans-serif';
+  const finishedCount = cars.filter(c=>c.finished).length; ctx.fillText(`Finishers: ${finishedCount} / ${cars.length}`, 12, 18);
+}
+
+/* ---------- Visual helpers (clouds/hills/road/car/flag/countdown) ---------- */
+function drawCloud(x,y,size,alpha){ ctx.save(); ctx.translate(x,y); ctx.scale(1,0.6); ctx.fillStyle = `rgba(255,255,255,${alpha})`; ctx.beginPath(); ctx.ellipse(0,0,size*0.6,size*0.6,0,0,Math.PI*2); ctx.ellipse(size*0.35,-6,size*0.5,size*0.45,0,0,Math.PI*2); ctx.ellipse(-size*0.45,-4,size*0.42,size*0.38,0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function drawHills(){ const baseY=H*0.6; ctx.save(); ctx.beginPath(); ctx.moveTo(0,H); const step=90; for(let x=0;x<=W+step;x+=step){ const y = baseY - Math.abs(Math.sin((x*0.0045)+t*0.5)*40) - 6; ctx.lineTo(x,y); } ctx.lineTo(W,H); ctx.closePath(); ctx.fillStyle='rgba(18,95,40,0.95)'; ctx.fill(); ctx.beginPath(); ctx.moveTo(0,H); for(let x=0;x<=W+step;x+=step){ const y = baseY + 36 - Math.abs(Math.sin((x*0.0038)+t*0.35)*28) + 20; ctx.lineTo(x,y); } ctx.lineTo(W,H); ctx.closePath(); ctx.fillStyle='rgba(28,130,60,0.75)'; ctx.fill(); ctx.restore(); }
+function drawLowBushes(roadTop){ const yBase = roadTop - 10; const count = Math.max(6, Math.floor(W/120)); for(let i=0;i<count;i++){ const x=(i/count)*(W+80)-40 + Math.sin(t*0.3 + i)*6; const y = yBase - Math.abs(Math.sin(i*0.9 + t*0.6))*6; drawBush(x,y,12 + (i%2)*4,0.7); } }
+function drawBush(x,y,size,alpha){ ctx.save(); ctx.translate(x,y); ctx.scale(1,0.7); ctx.fillStyle = `rgba(40,140,45,${0.95*alpha})`; ctx.beginPath(); ctx.ellipse(0,0,size*0.6,size*0.6,0,0,Math.PI*2); ctx.ellipse(size*0.45,-6,size*0.5,size*0.45,0,0,Math.PI*2); ctx.ellipse(-size*0.45,-4,size*0.42,size*0.38,0,0,Math.PI*2); ctx.fill(); ctx.restore(); ctx.save(); ctx.globalAlpha=0.16; ctx.fillStyle='#9ff08f'; ctx.beginPath(); ctx.ellipse(x - size*0.15, y - 2, size*0.22, size*0.12, 0,0,Math.PI*2); ctx.fill(); ctx.restore(); }
+function drawRoad(){ const roadTop = H * ROAD_TOP_RATIO; const roadHeight = H - roadTop; ctx.fillStyle='#2b2b2b'; ctx.fillRect(0, roadTop, W, roadHeight); ctx.fillStyle='#111'; ctx.fillRect(0, roadTop + roadHeight - 28, W, 28); ctx.save(); ctx.globalAlpha=0.06; ctx.fillStyle='#000'; for(let x=0;x<W;x+=26) ctx.fillRect(x, roadTop+10, 6, roadHeight-20); ctx.restore(); ctx.strokeStyle='rgba(255,255,255,0.12)'; ctx.lineWidth=2; ctx.setLineDash([12,12]); ctx.beginPath(); ctx.moveTo(8, roadTop+10); ctx.lineTo(8, H-10); ctx.moveTo(W-8, roadTop+10); ctx.lineTo(W-8, H-10); ctx.stroke(); ctx.setLineDash([]); return roadTop; }
+function drawCenterLine(roadTop){ const roadHeight = H - roadTop; const y = roadTop + roadHeight*0.45; ctx.save(); ctx.strokeStyle='#ffd300'; ctx.lineWidth=6; ctx.setLineDash([48,28]); const dashOffset=(t*80)%200; ctx.lineDashOffset=-dashOffset; ctx.beginPath(); ctx.moveTo(-400,y); ctx.lineTo(W+400,y); ctx.stroke(); ctx.restore(); }
+function drawFlagAtStart(x,y,scale=1,waving=0){ ctx.save(); ctx.translate(x,y); ctx.scale(scale,scale); ctx.fillStyle='#6b3f1d'; ctx.fillRect(-2,-80,4,80); const w=36,h=24; ctx.save(); ctx.translate(2,-72); ctx.rotate(Math.sin(waving)*0.18); const rows=3,cols=4,cellW=w/cols,cellH=h/rows; for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){ ctx.fillStyle = ((r+c)%2===0)?'#fff':'#000'; ctx.fillRect(c*cellW, r*cellH, cellW, cellH); } ctx.restore(); ctx.restore(); }
+function drawCountdownOverlay(){ ctx.save(); ctx.fillStyle='rgba(6,8,12,0.35)'; ctx.fillRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.textAlign='center'; if(countdown>0 && countdown<=0.9){ ctx.font='bold 72px Poppins, sans-serif'; ctx.fillText('GO!', W/2, H/2+28); } else { const val = Math.ceil(countdown); ctx.font='bold 96px Poppins, sans-serif'; ctx.fillText(String(val), W/2, H/2+36); } ctx.restore(); }
+function drawCar(x,y,color,active,finished,isPlayer){ ctx.save(); ctx.translate(x,y); if(isPlayer && !finished){ ctx.beginPath(); ctx.fillStyle='rgba(45,156,255,0.08)'; ctx.ellipse(0,6,70,30,0,0,Math.PI*2); ctx.fill(); } ctx.beginPath(); ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.ellipse(0,22,48,12,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.fillStyle = finished? '#999' : (active ? brighten(color,0.12) : color); roundRect(ctx,-46,-18,92,38,8); ctx.fill(); ctx.beginPath(); ctx.fillStyle='rgba(25,25,35,0.92)'; roundRect(ctx,-12,-14,32,22,6); ctx.fill(); ctx.fillStyle = finished ? '#7a0000' : '#8b0000'; roundRect(ctx,34,-10,18,8,3); ctx.fill(); ctx.fillStyle='#1f1f1f'; roundRect(ctx,-56,-6,12,10,3); ctx.fill(); ctx.fillStyle='#0a0a0a'; ctx.beginPath(); ctx.ellipse(-28,20,10,10,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(28,20,10,10,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#444'; ctx.beginPath(); ctx.ellipse(-28,20,4,4,0,0,Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.ellipse(28,20,4,4,0,0,Math.PI*2); ctx.fill(); ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.font='10px Poppins, sans-serif'; ctx.textAlign='center'; const label = isPlayer? (finished? 'FINISHED':'YOU') : (finished? 'FIN' : ''); ctx.fillText(label,0,-26); ctx.restore(); }
+function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r); ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h); ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r); ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath(); }
+function brighten(hex,amt){ try{ const c=hex.replace('#',''); const r=Math.min(255,Math.floor(parseInt(c.substring(0,2),16)*(1+amt))); const g=Math.min(255,Math.floor(parseInt(c.substring(2,4),16)*(1+amt))); const b=Math.min(255,Math.floor(parseInt(c.substring(4,6),16)*(1+amt))); return `rgb(${r},${g},${b})`; }catch(e){ return hex; } }
+
+/* ---------- Initialization & main loop ---------- */
+function initAndStart(){
+  ensureCanvasSize(); initClouds(); applyLevelToBots(); restartRace(); refreshGamifyUI(); lastTime = 0; requestAnimationFrame(loop);
+}
+window.addEventListener('load', initAndStart);
+function loop(now){ if(!lastTime) lastTime = now; const dt = Math.min(0.05,(now-lastTime)/1000); lastTime = now; update(dt); draw(); requestAnimationFrame(loop); }
+
+/* ---------- Gamify UI refresh & badges render ---------- */
+function refreshGamifyUI(){
+  document.getElementById('uiXp').textContent = Math.floor(gamifyState.xp || 0);
+  document.getElementById('uiPoints').textContent = Math.floor(gamifyState.points || 0);
+  document.getElementById('uiBrainbits').textContent = Math.floor(gamifyState.brainbits || 0);
+  const panelXp = document.getElementById('panelXp'); if(panelXp) panelXp.textContent = Math.floor(gamifyState.xp||0);
+  const panelPoints = document.getElementById('panelPoints'); if(panelPoints) panelPoints.textContent = Math.floor(gamifyState.points||0);
+  const panelWins = document.getElementById('panelWins'); if(panelWins) panelWins.textContent = gamifyState.wins||0;
+  const panelCompleted = document.getElementById('panelCompleted'); if(panelCompleted) panelCompleted.textContent = gamifyState.completedRaces||0;
+  const panelBrain = document.getElementById('panelBrainbits'); if(panelBrain) panelBrain.textContent = gamifyState.brainbits||0;
+  renderBadges();
+  renderAchievements();
+  renderRecent();
+  updateSkipButtonState();
+}
+
+function renderBadges(){
+  const container = document.getElementById('badgesList');
+  if(!container) return;
+  container.innerHTML = '';
+  const badges = (gamifyState.badges || []).slice().reverse();
+  if(!badges.length){ container.innerHTML = '<div class="small-muted">No badges earned yet</div>'; return; }
+  badges.forEach(b=>{
+    const el = document.createElement('div');
+    el.className = 'badge';
+    el.title = b.desc || '';
+    el.textContent = b.title || b.id;
+    container.appendChild(el);
+  });
+}
+
+function renderAchievements(){
+  const container = document.getElementById('achievementsList');
+  if(!container) return;
+  container.innerHTML = '';
+  const stats = [
+    { k: 'Wins', v: gamifyState.wins || 0 },
+    { k: 'Completed', v: gamifyState.completedRaces || 0 },
+    { k: 'XP', v: gamifyState.xp || 0 },
+    { k: 'Brainbits', v: gamifyState.brainbits || 0 }
+  ];
+  stats.forEach(s=>{
+    const el = document.createElement('div');
+    el.className = 'achievement';
+    el.innerHTML = `<strong>${s.k}</strong>: ${s.v}`;
+    container.appendChild(el);
+  });
+}
+
+function renderRecent(){
+  const el = document.getElementById('recentActivity');
+  if(!el) return;
+  const list = gamifyState.recent || [];
+  if(!list.length){ el.textContent = 'No activity yet'; return; }
+  el.innerHTML = list.slice(0,6).map(r=>`${escapeHtml(r.msg)} <span class="small-muted" style="font-size:11px"> — ${new Date(r.date).toLocaleTimeString()}</span>`).join('<br>');
+}
+
+/* ---------- util ---------- */
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- toast util ---------- */
+function showAchievementToast(msg, timeout=3000){
+  const el = document.createElement('div'); el.className='toast'; el.textContent = msg; document.body.appendChild(el);
+  setTimeout(()=>{ el.style.opacity='0'; setTimeout(()=> el.remove(),400); }, timeout);
+}
+function showTemporaryPanelNotice(msg, d=2000){
+  showAchievementToast(msg,d);
+}
+
+/* expose API */
+window.Gamify = { awardXP, awardPoints, awardBrainbits, recordWinLocal, recordPlayerCompletion, loadState: ()=> JSON.parse(JSON.stringify(gamifyState)) };
+
+</script>
+</body>
+</html>

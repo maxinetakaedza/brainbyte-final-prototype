@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Brain Bite Wallet</title>
+
+  <style>
+  /* Color scheme inspired by provided screenshot */
+  :root{
+    --bg-1: #0b0620;         /* very dark purple/navy */
+    --bg-2: #1a0f39;         /* deep indigo */
+    --card: #15102a;         /* card background */
+    --card-glow: rgba(143, 84, 255, 0.14);
+    --primary-start: #9a4bff; /* purple */
+    --primary-end: #39b8ff;   /* cyan/blue */
+    --accent: #caa6ff;
+    --muted: #9aa8b2;
+    --input-bg: rgba(255,255,255,0.03);
+    --glass: rgba(255,255,255,0.02);
+    --text: #e9e7ff;
+  }
+
+  /* page base */
+  html,body{height:100%;margin:0}
+  body{
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    color:var(--text);
+    background: radial-gradient(1000px 400px at 10% 10%, rgba(120,82,255,0.08), transparent 6%),
+                linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 100%);
+    overflow:hidden;
+  }
+
+  /* floating emoji background layer */
+  #emoji-bg{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .emoji{
+    position:absolute;
+    font-size:28px;
+    opacity:0.12;
+    filter: drop-shadow(0 6px 16px rgba(0,0,0,0.6));
+    will-change: transform, opacity;
+    animation-name: floatUp, sway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(110vh) rotate(0deg); opacity:0; }
+    6% { opacity:1; }
+    90% { opacity:1; }
+    100% { transform: translateY(-30vh) rotate(360deg); opacity:0; }
+  }
+  @keyframes sway {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(12px); }
+    100% { transform: translateX(0); }
+  }
+
+  /* main app sits above emojis */
+  #app{ position:relative; z-index:5; min-height:100vh; display:flex; flex-direction:column; }
+
+  /* Top bar */
+  .topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 28px;
+    border-bottom:1px solid rgba(255,255,255,0.02);
+    z-index:6;
+  }
+  .topbar h1{ margin:0; font-size:20px; display:flex; gap:8px; align-items:center; font-weight:700; letter-spacing:0.2px; }
+  .brand-emoji{ font-size:18px; filter: drop-shadow(0 6px 14px rgba(58,139,255,0.12)); }
+  #userInfo { color:var(--muted); font-size:13px; margin-top:6px; }
+
+  .topbar-controls{ display:flex; gap:12px; align-items:center; }
+
+  .balance{ text-align:right; }
+  .balance .label{ font-size:12px; color:var(--muted) }
+  #balanceAmount{ font-size:18px; color:var(--primary-end); font-weight:700 }
+
+  /* Modal / Login card like screenshot */
+  .modal{
+    position:fixed;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    z-index:10;
+  }
+  .modal-card{
+    width:360px;
+    padding:28px;
+    border-radius:18px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 20px 40px rgba(6,6,16,0.62), 0 0 40px var(--card-glow);
+    backdrop-filter: blur(8px);
+    text-align:center;
+    color:var(--text);
+  }
+
+  .modal-card h2{ margin:0 0 12px 0; font-size:20px; font-weight:800; letter-spacing:0.4px; display:flex; align-items:center; justify-content:center; gap:8px }
+  .pill-choices{ display:flex; gap:10px; justify-content:center; margin-bottom:16px }
+  .pill{ padding:8px 16px; border-radius:999px; font-weight:700; cursor:pointer; border:1px solid transparent; background:transparent; color:var(--muted); }
+  .pill.active{ background: linear-gradient(90deg,var(--primary-start),var(--primary-end)); color:white; box-shadow: 0 8px 18px rgba(58,139,255,0.12); }
+
+  /* inputs like screenshot */
+  .form-row{ margin:10px 0; text-align:left; }
+  input, select{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border: 1px solid rgba(255,255,255,0.03);
+    background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+    color:var(--text);
+    outline:none;
+    font-size:14px;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.35);
+  }
+  input::placeholder{ color:rgba(230,230,255,0.14); }
+
+  .login-btn{
+    width:100%;
+    margin-top:14px;
+    padding:12px 16px;
+    border-radius:12px;
+    font-weight:800;
+    color:#031428;
+    border:0;
+    cursor:pointer;
+    background: linear-gradient(90deg, var(--primary-start), var(--primary-end));
+    box-shadow: 0 8px 24px rgba(58,139,255,0.12), inset 0 1px 0 rgba(255,255,255,0.12);
+    font-size:15px;
+  }
+
+  .small-muted{ color:var(--muted); font-size:12px; margin-top:8px; display:block; }
+
+  /* Main wallet area */
+  main{ padding:28px; flex:1; z-index:6; position:relative; }
+  .panel{ max-width:1100px; margin:0 auto; }
+  .hidden{ display:none }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fit,minmax(260px,1fr));
+    gap:16px;
+    margin-top:12px;
+  }
+
+  .card{
+    background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(0,0,0,0.06));
+    border-radius:12px;
+    padding:14px;
+    box-shadow: 0 10px 30px rgba(2,8,23,0.55);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+
+  .card h3{ margin:0 0 8px 0; font-size:16px }
+  .large{ font-size:28px; color:var(--primary-end); font-weight:700; margin-top:8px; }
+
+  .history{ list-style:none; padding:0; margin:0; max-height:360px; overflow:auto }
+  .history li{ padding:10px 8px; border-bottom:1px dashed rgba(255,255,255,0.02); display:flex; justify-content:space-between; gap:10px; align-items:center }
+  .history li .desc{ color:var(--muted); font-size:13px }
+  .history li .amount{ font-weight:700 }
+
+  label{ display:block; margin:8px 0; font-size:13px; color:var(--muted) }
+  button{ padding:8px 12px; background:var(--primary-start); color:white; font-weight:700; border:0; border-radius:10px; cursor:pointer }
+  button.secondary{ background:transparent; color:var(--muted); border:1px solid rgba(255,255,255,0.03) }
+  .row{ display:flex; gap:8px; margin-top:8px }
+
+  .scanner{ margin-top:8px; width:100%; height:260px; border-radius:8px; overflow:hidden; background:linear-gradient(180deg, rgba(0,0,0,0.2), transparent) }
+
+  footer{ padding:20px; text-align:center; color:var(--muted) }
+
+  /* responsive adjustments */
+  @media (max-width:520px){
+    .modal-card{ width:92%; padding:18px; border-radius:14px; }
+    .emoji{ font-size:22px; }
+  }
+
+  /* tiny focus style */
+  input:focus{ box-shadow: 0 6px 20px rgba(74,56,255,0.08); border-color: rgba(120,82,255,0.22); }
+  </style>
+
+  <!-- QR code and scanner libs (kept) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script>
+</head>
+<body>
+  <div id="emoji-bg" aria-hidden="true"></div>
+
+  <div id="app">
+    <!-- Login / Open Wallet Modal -->
+    <div id="loginModal" class="modal" role="dialog" aria-modal="true">
+      <div class="modal-card" role="document">
+        <h2>
+          <span style="display:inline-flex;align-items:center;gap:8px">
+            <span style="font-weight:900">BrainBite</span>
+            <span class="brand-emoji">🧠</span>
+          </span>
+        </h2>
+
+        <div class="pill-choices" aria-hidden="false">
+          <button id="loginPill" class="pill active">Login</button>
+          <button id="signupPill" class="pill">Sign Up</button>
+        </div>
+
+        <div class="form-row">
+          <input id="loginUsername" placeholder="Email or username" aria-label="username or email" />
+        </div>
+        <div class="form-row">
+          <input id="loginPin" type="password" placeholder="PIN (4 digits)" maxlength="4" aria-label="pin" />
+        </div>
+        <div class="form-row">
+          <select id="loginRole" aria-label="role">
+            <option value="student">Student</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+
+        <button id="openWalletBtn" class="login-btn">Login</button>
+        <button id="createWalletBtn" class="login-btn" style="margin-top:10px; background:transparent; color:var(--accent); border:1px solid rgba(255,255,255,0.04);">Create New Wallet</button>
+
+        <small class="small-muted">This demo stores data locally. For production use secure backend authentication.</small>
+      </div>
+    </div>
+
+    <!-- Main Wallet UI -->
+    <header class="topbar">
+      <div>
+        <h1><span>BrainBite</span> <span class="brand-emoji">🧠</span></h1>
+        <div id="userInfo"></div>
+      </div>
+
+      <div class="topbar-controls">
+        <div id="balancePanel" class="balance">
+          <div class="label">Balance</div>
+          <div id="balanceAmount">0 BB</div>
+        </div>
+        <button id="logoutBtn" class="secondary hidden">Lock / Logout</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="studentArea" class="panel hidden">
+        <h2>Student Wallet</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Payment History</h3>
+            <ul id="historyList" class="history"></ul>
+          </div>
+
+          <div class="card">
+            <h3>Voucher Redeemer</h3>
+            <div id="redeemResult" class="result"></div>
+            <div class="redeemControls">
+              <label>
+                Redeem voucher code
+                <input id="redeemCodeInput" placeholder="paste voucher code here" />
+              </label>
+              <button id="redeemCodeBtn">Redeem Code</button>
+              <hr/>
+              <div>
+                <button id="openScannerBtn">Scan QR voucher</button>
+                <div id="qrScanner" class="scanner hidden"></div>
+                <button id="stopScannerBtn" class="secondary hidden">Stop Scanner</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Send Brain Bits</h3>
+            <label>
+              Recipient username
+              <input id="sendTo" placeholder="recipient username" />
+            </label>
+            <label>
+              Amount (BB)
+              <input id="sendAmount" type="number" min="1" />
+            </label>
+            <label>
+              Note
+              <input id="sendNote" placeholder="why you're sending" />
+            </label>
+            <div class="row">
+              <button id="sendBtn">Send</button>
+              <button id="generateVoucherBtn" class="secondary">Generate Voucher (QR)</button>
+            </div>
+            <div id="voucherOutput" class="voucherOutput"></div>
+          </div>
+
+          <div class="card">
+            <h3>Receive / Sponsorship</h3>
+            <label>
+              Sponsor name
+              <input id="sponsorName" placeholder="parent or teacher name" />
+            </label>
+            <label>
+              Amount (BB)
+              <input id="sponsorAmount" type="number" min="1" />
+            </label>
+            <button id="sponsorBtn">Add Sponsorship</button>
+            <div id="sponsorResult" class="result"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="teacherArea" class="panel hidden">
+        <h2>Teacher Wallet</h2>
+        <div class="grid">
+          <div class="card">
+            <h3>Teacher Pool</h3>
+            <div class="label">Available to share:</div>
+            <div id="teacherPool" class="large">0 BB</div>
+
+            <h4>Share to a student (immediate)</h4>
+            <label>
+              Student username
+              <input id="shareStudent" placeholder="student username" />
+            </label>
+            <label>
+              Class name
+              <input id="shareClass" placeholder="class (e.g. 10A)" />
+            </label>
+            <label>
+              Amount (BB)
+              <input id="shareAmount" type="number" min="1" />
+            </label>
+            <button id="shareBtn">Share Now</button>
+            <div id="shareResult" class="result"></div>
+          </div>
+
+          <div class="card">
+            <h3>Voucher Giver</h3>
+            <label>
+              Student name
+              <input id="vgStudentName" placeholder="student full name" />
+            </label>
+            <label>
+              Student username
+              <input id="vgStudentUsername" placeholder="student username" />
+            </label>
+            <label>
+              Class
+              <input id="vgClass" placeholder="class (e.g. 9B)" />
+            </label>
+            <label>
+              Voucher amount (BB)
+              <input id="vgAmount" type="number" min="1" />
+            </label>
+            <label>
+              Voucher code (leave blank to auto-generate)
+              <input id="vgCode" placeholder="ABC123" />
+            </label>
+            <div class="row">
+              <button id="giveVoucherBtn">Create Voucher</button>
+              <button id="generateBulkBtn" class="secondary">Generate QR</button>
+            </div>
+            <div id="vgResult" class="voucherOutput"></div>
+          </div>
+
+          <div class="card">
+            <h3>Class Balances</h3>
+            <ul id="classBalances" class="history"></ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>Brain Byte demo wallet — client-side only (localStorage). For production use, back-end and secure auth are required.</small>
+    </footer>
+  </div>
+
+  <script>
+  /* Combined app.js with emoji background and updated color scheme.
+     - Adds floating school emojis behind the UI
+     - Keeps session behavior: PIN modal hides after create/open
+  */
+
+  (function(){
+    // --- Emoji background generator ---
+    const emojiBg = document.getElementById('emoji-bg');
+    const emojis = ['🎒','📚','🧠','✏️','📝','📐','🎓','🔬','📖','🖍️'];
+    // create N floating emoji elements with random properties
+    function createEmojis(count = 18){
+      const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+      for(let i=0;i<count;i++){
+        const el = document.createElement('div');
+        el.className = 'emoji';
+        el.textContent = emojis[Math.floor(Math.random()*emojis.length)];
+        // randomize size, left position, animation duration/delay
+        const size = Math.floor(20 + Math.random()*36);
+        el.style.fontSize = size + 'px';
+        el.style.left = (Math.random()*100) + '%';
+        // random vertical start beyond bottom
+        el.style.bottom = (-10 - Math.random()*30) + 'vh';
+        // varying opacity
+        el.style.opacity = (0.06 + Math.random()*0.14).toFixed(2);
+        // durations: 10s - 30s
+        const dur = 9000 + Math.random()*20000;
+        const delay = Math.random()*6000;
+        el.style.animationDuration = dur + 'ms, ' + (3000 + Math.random()*6000) + 'ms';
+        el.style.animationDelay = delay + 'ms, ' + (delay/4) + 'ms';
+        emojiBg.appendChild(el);
+      }
+    }
+    createEmojis(20);
+
+    // --- Wallet app logic (kept from earlier file) ---
+    const qs = sel => document.querySelector(sel);
+    const nowISO = () => (new Date()).toISOString();
+
+    function uid(len=8){
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let s='';
+      for(let i=0;i<len;i++) s += chars[Math.floor(Math.random()*chars.length)];
+      return s;
+    }
+
+    function saveWallet(username, role, data){
+      localStorage.setItem(storageKey(username, role), JSON.stringify(data));
+    }
+    function loadWallet(username, role){
+      const raw = localStorage.getItem(storageKey(username, role));
+      return raw ? JSON.parse(raw) : null;
+    }
+    function storageKey(username, role){ return `brainbyte_wallet_${role}_${username}`; }
+
+    function saveSession(username, role){
+      localStorage.setItem('brainbyte_session', JSON.stringify({ username, role }));
+    }
+    function loadSession(){
+      const raw = localStorage.getItem('brainbyte_session');
+      return raw ? JSON.parse(raw) : null;
+    }
+    function clearSession(){
+      localStorage.removeItem('brainbyte_session');
+    }
+
+    function formatBB(n){ return `${n} BB`; }
+
+    function demoTransactions(){
+      return [
+        { id: uid(10), date: nowISO(), desc: "Bought new car skin — Akello Grand Prix", amount: -120, meta:{type:'purchase'} },
+        { id: uid(10), date: nowISO(), desc: "Revision pack — History", amount: -40, meta:{type:'purchase'} },
+        { id: uid(10), date: nowISO(), desc: "1 hour tutoring", amount: -60, meta:{type:'purchase'} },
+        { id: uid(10), date: nowISO(), desc: "Premium study revision pack", amount: -200, meta:{type:'purchase'} },
+        { id: uid(10), date: nowISO(), desc: "Sponsor: Parent A", amount: 500, meta:{type:'sponsor'} },
+      ];
+    }
+
+    // Elements
+    const loginModal = qs('#loginModal');
+    const openWalletBtn = qs('#openWalletBtn');
+    const createWalletBtn = qs('#createWalletBtn');
+    const loginUsername = qs('#loginUsername');
+    const loginPin = qs('#loginPin');
+    const loginRole = qs('#loginRole');
+
+    const userInfo = qs('#userInfo');
+    const balanceAmount = qs('#balanceAmount');
+
+    const studentArea = qs('#studentArea');
+    const teacherArea = qs('#teacherArea');
+    const historyList = qs('#historyList');
+
+    const redeemCodeInput = qs('#redeemCodeInput');
+    const redeemCodeBtn = qs('#redeemCodeBtn');
+    const openScannerBtn = qs('#openScannerBtn');
+    const stopScannerBtn = qs('#stopScannerBtn');
+    const qrScannerEl = qs('#qrScanner');
+    const redeemResult = qs('#redeemResult');
+
+    const sendTo = qs('#sendTo');
+    const sendAmount = qs('#sendAmount');
+    const sendNote = qs('#sendNote');
+    const sendBtn = qs('#sendBtn');
+    const generateVoucherBtn = qs('#generateVoucherBtn');
+    const voucherOutput = qs('#voucherOutput');
+
+    const sponsorName = qs('#sponsorName');
+    const sponsorAmount = qs('#sponsorAmount');
+    const sponsorBtn = qs('#sponsorBtn');
+    const sponsorResult = qs('#sponsorResult');
+
+    const teacherPoolEl = qs('#teacherPool');
+    const shareStudent = qs('#shareStudent');
+    const shareClass = qs('#shareClass');
+    const shareAmount = qs('#shareAmount');
+    const shareBtn = qs('#shareBtn');
+    const shareResult = qs('#shareResult');
+
+    const vgStudentName = qs('#vgStudentName');
+    const vgStudentUsername = qs('#vgStudentUsername');
+    const vgClass = qs('#vgClass');
+    const vgAmount = qs('#vgAmount');
+    const vgCode = qs('#vgCode');
+    const giveVoucherBtn = qs('#giveVoucherBtn');
+    const generateBulkBtn = qs('#generateBulkBtn');
+    const vgResult = qs('#vgResult');
+
+    const classBalancesList = qs('#classBalances');
+
+    const logoutBtn = qs('#logoutBtn');
+
+    let currentUser = null;
+    let currentWallet = null;
+    let html5QrScanner = null;
+
+    // wallet model helpers
+    function hashPin(pin){ return btoa(`pin:${pin}`); }
+    function createStudentWallet(username, pin){
+      const w = { username, role:'student', pinHash:hashPin(pin), balance:0, transactions: demoTransactions(), created_at: nowISO() };
+      w.balance = w.transactions.reduce((s,t)=> s + (t.amount||0), 0);
+      saveWallet(username,'student',w);
+      return w;
+    }
+    function createTeacherWallet(username, pin){
+      const w = { username, role:'teacher', pinHash:hashPin(pin), pool:1000, created_at: nowISO(), classes:{} };
+      saveWallet(username,'teacher',w);
+      return w;
+    }
+
+    // UI helpers
+    function setUserInfo(username, role){ userInfo.innerText = `${username} • ${role}`; }
+    function setBalanceDisplay(n){ balanceAmount.innerText = formatBB(n); }
+    function showLoginModal(){ loginModal.style.display = 'flex'; logoutBtn.classList.add('hidden'); }
+    function hideLoginModal(){ loginModal.style.display = 'none'; logoutBtn.classList.remove('hidden'); }
+
+    function renderStudentUI(){ studentArea.classList.remove('hidden'); teacherArea.classList.add('hidden'); renderHistory(); }
+    function renderTeacherUI(){ teacherArea.classList.remove('hidden'); studentArea.classList.add('hidden'); teacherPoolEl.innerText = formatBB(currentWallet.pool || 0); renderClassBalances(); }
+
+    function renderHistory(){
+      historyList.innerHTML = '';
+      const txs = (currentWallet.transactions || []).slice().reverse();
+      txs.forEach(t=>{
+        const li = document.createElement('li');
+        const left = document.createElement('div');
+        const right = document.createElement('div');
+        left.innerHTML = `<div><strong>${t.desc}</strong></div><div class="desc">${new Date(t.date).toLocaleString()}</div>`;
+        right.innerHTML = `<div class="amount" style="color:${t.amount>=0? 'var(--primary-end)':'#ff8b8b'}">${t.amount>0? '+' : ''}${t.amount} BB</div>`;
+        li.appendChild(left);
+        li.appendChild(right);
+        historyList.appendChild(li);
+      });
+      setBalanceDisplay(currentWallet.balance || 0);
+    }
+
+    function renderClassBalances(){
+      classBalancesList.innerHTML = '';
+      const classes = currentWallet.classes || {};
+      if(Object.keys(classes).length === 0){
+        const li = document.createElement('li');
+        li.textContent = 'No class allocations yet.';
+        classBalancesList.appendChild(li);
+      } else {
+        Object.entries(classes).forEach(([cls,amount])=>{
+          const li = document.createElement('li');
+          li.innerHTML = `<div><strong>${cls}</strong><div class="desc">Allocated/shared: ${amount} BB</div></div><div class="amount">${amount} BB</div>`;
+          classBalancesList.appendChild(li);
+        });
+      }
+    }
+
+    // actions
+    openWalletBtn.addEventListener('click', () => {
+      const username = (loginUsername.value || '').trim();
+      const pin = (loginPin.value || '').trim();
+      const role = loginRole.value;
+      if(!username || !pin || pin.length<4){ alert('Please enter username and a 4-digit PIN.'); return; }
+      const wallet = loadWallet(username, role);
+      if(!wallet){ alert('No wallet found. Use "Create New Wallet" to create one.'); return; }
+      if(wallet.pinHash !== hashPin(pin)){ alert('Incorrect PIN.'); return; }
+      currentUser = { username, role }; currentWallet = wallet;
+      saveSession(username, role);
+      hideLoginModal();
+      onWalletOpened();
+    });
+
+    createWalletBtn.addEventListener('click', () => {
+      const username = (loginUsername.value || '').trim();
+      const pin = (loginPin.value || '').trim();
+      const role = loginRole.value;
+      if(!username || !pin || pin.length<4){ alert('Please enter username and a 4-digit PIN.'); return; }
+      const existing = loadWallet(username, role);
+      if(existing){ if(!confirm('A wallet with that username and role already exists. Overwrite?')) return; }
+      let w = (role==='student')? createStudentWallet(username,pin) : createTeacherWallet(username,pin);
+      currentUser = { username, role }; currentWallet = w;
+      saveSession(username, role);
+      hideLoginModal();
+      onWalletOpened();
+    });
+
+    function onWalletOpened(){
+      setUserInfo(currentUser.username, currentUser.role);
+      if(currentUser.role === 'student') renderStudentUI(); else renderTeacherUI();
+    }
+
+    // voucher redemption & scanner
+    redeemCodeBtn.addEventListener('click', () => {
+      const code = (redeemCodeInput.value || '').trim();
+      if(!code) { redeemResult.innerText = "Enter a voucher code to redeem."; return; }
+      handleVoucherString(code);
+    });
+
+    openScannerBtn.addEventListener('click', async () => {
+      qrScannerEl.classList.remove('hidden');
+      stopScannerBtn.classList.remove('hidden');
+      openScannerBtn.classList.add('secondary');
+      openScannerBtn.disabled = true;
+      if(html5QrScanner) return;
+      html5QrScanner = new Html5Qrcode("qrScanner");
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      try{
+        await html5QrScanner.start(
+          { facingMode: "environment" },
+          config,
+          (decodedText)=> { stopScanner(); handleVoucherString(decodedText); },
+          (_)=> {}
+        );
+      } catch(e){
+        redeemResult.innerText = 'QR scanner failed. Make sure site is served over HTTPS or use localhost.';
+        console.error(e);
+      }
+    });
+
+    stopScannerBtn.addEventListener('click', stopScanner);
+    function stopScanner(){
+      if(html5QrScanner){
+        html5QrScanner.stop().catch(()=>{}).then(()=>{ html5QrScanner.clear(); html5QrScanner = null; });
+      }
+      qrScannerEl.classList.add('hidden');
+      stopScannerBtn.classList.add('hidden');
+      openScannerBtn.classList.remove('secondary');
+      openScannerBtn.disabled = false;
+    }
+
+    function handleVoucherString(str){
+      try{
+        let voucher = null;
+        if(str.trim().startsWith('{')) voucher = JSON.parse(str);
+        else {
+          const vRaw = localStorage.getItem(`brainbyte_voucher_${str}`);
+          if(vRaw) voucher = JSON.parse(vRaw);
+          else { redeemResult.innerText = "Voucher not found."; return; }
+        }
+        if(voucher.type !== 'voucher' || !voucher.amount){ redeemResult.innerText = "Invalid voucher."; return; }
+        currentWallet.balance = (currentWallet.balance || 0) + voucher.amount;
+        currentWallet.transactions = currentWallet.transactions || [];
+        currentWallet.transactions.push({ id: uid(10), date: nowISO(), desc: `Redeemed voucher ${voucher.code} (from ${voucher.from || 'system'})`, amount: voucher.amount, meta: { type:'voucher', code:voucher.code } });
+        saveWallet(currentUser.username, currentUser.role, currentWallet);
+        redeemResult.innerText = `Success! Redeemed ${voucher.amount} BB.`;
+        renderHistory();
+        if(voucher.code) localStorage.removeItem(`brainbyte_voucher_${voucher.code}`);
+      } catch(e){
+        redeemResult.innerText = 'Failed to process voucher.'; console.error(e);
+      }
+    }
+
+    // sending / vouchers
+    sendBtn.addEventListener('click', () => {
+      const to = (sendTo.value || '').trim();
+      const amt = parseInt(sendAmount.value, 10);
+      const note = (sendNote.value || '').trim();
+      if(!to || !amt || amt<=0){ alert('Enter recipient and amount.'); return; }
+      if(currentWallet.balance < amt){ alert('Insufficient balance.'); return; }
+
+      let recipient = loadWallet(to, 'student');
+      if(recipient){
+        currentWallet.balance -= amt;
+        recipient.balance = (recipient.balance || 0) + amt;
+        const txId = uid(10);
+        currentWallet.transactions.push({ id:txId, date:nowISO(), desc:`Sent ${amt} BB to ${to}`, amount:-amt, meta:{to,to, note} });
+        recipient.transactions = recipient.transactions || [];
+        recipient.transactions.push({ id:uid(10), date:nowISO(), desc:`Received ${amt} BB from ${currentUser.username}`, amount:amt, meta:{from:currentUser.username, note} });
+        saveWallet(currentUser.username, currentUser.role, currentWallet);
+        saveWallet(to, 'student', recipient);
+        alert(`Sent ${amt} BB to ${to} successfully.`);
+        renderHistory();
+      } else {
+        const code = uid(8);
+        const voucher = { type:'voucher', amount:amt, from: currentUser.username, code, created_at: nowISO() };
+        localStorage.setItem(`brainbyte_voucher_${code}`, JSON.stringify(voucher));
+        currentWallet.balance -= amt;
+        currentWallet.transactions.push({ id:uid(10), date:nowISO(), desc:`Created voucher ${code} for ${to}`, amount:-amt, meta:{voucher:code} });
+        saveWallet(currentUser.username, currentUser.role, currentWallet);
+        voucherOutput.innerHTML = `<div>Voucher created for ${to}: <strong>${code}</strong></div><div id="qrcode"></div><small class="desc">Share this QR or code with ${to} to redeem.</small>`;
+        new QRCode(document.getElementById("qrcode"), { text: JSON.stringify(voucher), width:160, height:160 });
+        renderHistory();
+      }
+    });
+
+    generateVoucherBtn.addEventListener('click', ()=>{
+      const amt = parseInt(sendAmount.value,10);
+      if(!amt || amt<=0){ alert('Enter an amount to generate voucher for'); return; }
+      if(currentWallet.balance < amt){ alert('Insufficient balance'); return; }
+      const code = uid(8);
+      const voucher = { type:'voucher', amount:amt, from: currentUser.username, code, created_at: nowISO() };
+      localStorage.setItem(`brainbyte_voucher_${code}`, JSON.stringify(voucher));
+      currentWallet.balance -= amt;
+      currentWallet.transactions.push({ id:uid(10), date:nowISO(), desc:`Generated voucher ${code}`, amount:-amt, meta:{voucher:code} });
+      saveWallet(currentUser.username, currentUser.role, currentWallet);
+      voucherOutput.innerHTML = `<div>Voucher: <strong>${code}</strong></div><div id="qrcode"></div><small class="desc">Scan to redeem.</small>`;
+      new QRCode(document.getElementById("qrcode"), { text: JSON.stringify(voucher), width:160, height:160 });
+      renderHistory();
+    });
+
+    sponsorBtn.addEventListener('click', ()=>{
+      const name = (sponsorName.value || '').trim() || 'Sponsor';
+      const amt = parseInt(sponsorAmount.value || '0',10);
+      if(!amt || amt<=0){ sponsorResult.innerText = 'Enter a valid amount.'; return; }
+      currentWallet.balance = (currentWallet.balance || 0) + amt;
+      currentWallet.transactions = currentWallet.transactions || [];
+      currentWallet.transactions.push({ id:uid(10), date:nowISO(), desc:`Sponsor (${name})`, amount:amt, meta:{type:'sponsor', sponsor:name} });
+      saveWallet(currentUser.username, currentUser.role, currentWallet);
+      sponsorResult.innerText = `Added ${amt} BB from ${name}.`;
+      renderHistory();
+    });
+
+    // teacher actions
+    shareBtn.addEventListener('click', ()=>{
+      const student = (shareStudent.value || '').trim();
+      const cls = (shareClass.value || '').trim() || 'Unknown';
+      const amt = parseInt(shareAmount.value || '0',10);
+      if(!student || !amt || amt<=0){ shareResult.innerText = 'Enter student username and amount.'; return; }
+      if(currentWallet.pool < amt){ shareResult.innerText = 'Insufficient pool in your teacher wallet.'; return; }
+      let sWallet = loadWallet(student, 'student');
+      if(!sWallet){ shareResult.innerText = `Student wallet ${student} not found. You can create a voucher instead.`; return; }
+      currentWallet.pool -= amt;
+      currentWallet.classes[cls] = (currentWallet.classes[cls]||0) + amt;
+      sWallet.balance = (sWallet.balance || 0) + amt;
+      sWallet.transactions = sWallet.transactions || [];
+      sWallet.transactions.push({ id:uid(10), date:nowISO(), desc:`Teacher ${currentUser.username} shared ${amt} BB (class ${cls})`, amount:amt, meta:{from:currentUser.username, class:cls} });
+      saveWallet(student,'student',sWallet);
+      saveWallet(currentUser.username,'teacher',currentWallet);
+      shareResult.innerText = `Shared ${amt} BB to ${student}.`;
+      teacherPoolEl.innerText = formatBB(currentWallet.pool);
+      renderClassBalances();
+    });
+
+    giveVoucherBtn.addEventListener('click', ()=>{
+      const sName = (vgStudentName.value || '').trim();
+      const sUser = (vgStudentUsername.value || '').trim();
+      const cls = (vgClass.value || '').trim() || 'Unknown';
+      const amt = parseInt(vgAmount.value || '0',10);
+      let code = (vgCode.value || '').trim();
+      if(!sUser || !amt || amt<=0){ vgResult.innerText = 'Enter student username and amount.'; return; }
+      if(currentWallet.pool < amt){ vgResult.innerText = 'Insufficient teacher pool.'; return; }
+      if(!code) code = uid(8);
+      const voucher = { type:'voucher', amount:amt, from: currentUser.username, to: sUser, studentName: sName, class: cls, code, created_at: nowISO() };
+      localStorage.setItem(`brainbyte_voucher_${code}`, JSON.stringify(voucher));
+      currentWallet.pool -= amt;
+      currentWallet.classes[cls] = (currentWallet.classes[cls]||0) + amt;
+      saveWallet(currentUser.username,'teacher',currentWallet);
+      vgResult.innerHTML = `<div>Voucher created: <strong>${code}</strong></div><div id="vg_qr"></div>`;
+      new QRCode(document.getElementById("vg_qr"), { text: JSON.stringify(voucher), width:160, height:160 });
+      teacherPoolEl.innerText = formatBB(currentWallet.pool);
+      renderClassBalances();
+    });
+
+    generateBulkBtn.addEventListener('click', ()=>{ vgResult.innerText = 'Use "Create Voucher" to produce QR codes. Bulk generation not implemented in demo.'; });
+
+    logoutBtn.addEventListener('click', ()=>{
+      clearSession(); currentUser = null; currentWallet = null;
+      studentArea.classList.add('hidden'); teacherArea.classList.add('hidden'); setUserInfo('', ''); setBalanceDisplay(0);
+      showLoginModal();
+    });
+
+    // Demo initialization and session restore
+    if(!loadWallet('student1','student')) createStudentWallet('student1','1234');
+    if(!loadWallet('mrs_akello','teacher')) createTeacherWallet('mrs_akello','0000');
+
+    const sess = loadSession();
+    if(sess && sess.username && sess.role){
+      const wallet = loadWallet(sess.username, sess.role);
+      if(wallet){ currentUser = { username: sess.username, role: sess.role }; currentWallet = wallet; hideLoginModal(); onWalletOpened(); }
+      else { clearSession(); showLoginModal(); }
+    } else {
+      showLoginModal();
+      loginUsername.value = 'student1'; loginPin.value = '1234'; loginRole.value = 'student';
+    }
+
+    // cleanup scanner on unload
+    window.addEventListener('beforeunload', ()=>{ if(html5QrScanner){ try{ html5QrScanner.stop(); } catch(e){} } });
+
+  })();
+  </script>
+</body>
+</html>

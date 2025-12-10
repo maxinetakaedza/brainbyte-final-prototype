@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrainByte - Profile</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #6a11cb;
+      --secondary: #00bfff;
+      --dark: #0f0c29;
+      --darker: #0a081a;
+      --card-bg: rgba(255, 255, 255, 0.08);
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
+    body {
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: white;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 20px; }
+    .logo span { background: linear-gradient(90deg, var(--secondary), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .avatar { font-size: 4rem; text-align: center; margin: 10px 0; }
+    .stats { display: flex; justify-content: space-around; margin: 20px 0; }
+    .stat { text-align: center; }
+    .stat-value { font-size: 1.4rem; font-weight: bold; color: gold; }
+    .stat-label { font-size: 0.9rem; color: #aaa; }
+    .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+    .back { display: block; margin-top: 20px; color: var(--secondary); text-align: center; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🧠 <span>BrainByte</span></div>
+    
+    <div class="card">
+      <div class="avatar">🧑‍🎓</div>
+      <h2 style="text-align:center;">Alex Johnson</h2>
+      
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-value">12</div>
+          <div class="stat-label">Level</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">4,280</div>
+          <div class="stat-label">XP</div>
+        </div>
+        <div class="stat">
+          <div class="stat-value">420</div>
+          <div class="stat-label">BrainBytes</div>
+        </div>
+      </div>
+
+      <h3>Pets & House</h3>
+      <p><em>(Unlock more with XP!)</em></p>
+      <div style="display:flex; gap:15px; margin:15px 0;">
+        <div style="text-align:center;">🐱<br><small>Lucky</small></div>
+        <div style="text-align:center;">🏠<br><small>Basic Hut</small></div>
+      </div>
+      <button class="btn btn-primary" onclick="alert('✨ Premium feature: Customize your house!')">Upgrade House</button>
+    </div>
+
+    <a href="hub.html" class="back">← Back to Hub</a>
+  </div>
+</body>
+</html>
