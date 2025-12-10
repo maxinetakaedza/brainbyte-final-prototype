@@ -30,8 +30,42 @@
       margin-bottom: 20px;
       border: 1px solid rgba(255,255,255,0.1);
     }
-    .class-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .announcement { background: rgba(74,56,255,0.15); padding: 16px; border-radius: 12px; margin: 12px 0; }
+    .class-header { 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      margin-bottom: 20px; 
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .view-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255,255,255,0.1);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+    .toggle-btn {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.3);
+      color: #ccc;
+      padding: 2px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .toggle-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+    .announcement { 
+      background: rgba(74,56,255,0.15); 
+      padding: 16px; 
+      border-radius: 12px; 
+      margin: 12px 0; 
+    }
     .announcement h4 { margin: 0 0 8px 0; color: var(--secondary); }
     .student-grid {
       display: grid;
@@ -45,20 +79,116 @@
       border-radius: 12px;
       text-align: center;
     }
-    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 8px; }
+    .btn { 
+      padding: 8px 16px; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: bold; 
+      cursor: pointer; 
+      margin-top: 8px; 
+    }
     .btn-primary { background: var(--primary); color: white; }
     .btn-secondary { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #ccc; }
-    .back { display: block; margin-top: 20px; color: var(--secondary); text-align: center; text-decoration: none; }
+    .back { 
+      display: block; 
+      margin-top: 20px; 
+      color: var(--secondary); 
+      text-align: center; 
+      text-decoration: none; 
+    }
+
+    /* Student view styles */
+    #studentView { display: none; }
+    .profile-summary {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      background: rgba(106, 17, 203, 0.2);
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin: 16px 0;
+    }
+    .profile-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 1.2rem;
+    }
+    .badge-list {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: rgba(255,215,0,0.2);
+      color: #ffd700;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logo">🧠 <span>BrainByte</span></div>
     
-    <div class="card">
+    <!-- Student View (hidden by default) -->
+    <div class="card" id="studentView">
+      <div class="class-header">
+        <h2>🏫 Grade 10B — Math</h2>
+        <span style="background:var(--primary); padding:4px 12px; border-radius:20px; font-size:0.9rem;">You • Student</span>
+      </div>
+
+      <div class="profile-summary">
+        <div class="profile-avatar">N</div>
+        <div class="profile-stats">
+          <div style="font-weight:700; margin-bottom:4px;">Nicole D.</div>
+          <div style="font-size:0.9rem; color:#ccc;">XP: <strong>4,280</strong> • Level 12</div>
+          <div style="font-size:0.85rem; color:#bbb; margin-top:4px;">320 XP to next level</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.9rem;">🧠 <strong>152</strong></div>
+          <div style="font-size:0.8rem; color:#ccc;">BrainBytes</div>
+        </div>
+      </div>
+
+      <div class="announcement">
+        <h4><i class="fas fa-tasks"></i> Your Assignment</h4>
+        <p>Complete the Algebra Quiz by Friday! Top 3 get 50 BrainBytes.</p>
+        <button class="btn btn-primary" onclick="alert('✅ Quiz started!')">Start Quiz Now</button>
+      </div>
+
+      <h3><i class="fas fa-history"></i> Your Progress</h3>
+      <ul style="padding-left:20px; color:#ccc; margin:12px 0; font-size:0.95rem;">
+        <li>Completed "Linear Equations" — ★★★★☆</li>
+        <li>Earned badge: <strong>Equation Master</strong></li>
+        <li>Bought "Quadratic Pack"</li>
+      </ul>
+
+      <h3><i class="fas fa-medal"></i> Your Badges</h3>
+      <div class="badge-list">
+        <span class="badge">⚡ Speed Solver</span>
+        <span class="badge">🎯 Accuracy Ace</span>
+        <span class="badge">🧮 Equation Master</span>
+      </div>
+    </div>
+
+    <!-- Teacher View (original content) -->
+    <div class="card" id="teacherView">
       <div class="class-header">
         <h2>🏫 Class: Grade 10B (Math)</h2>
-        <span style="background:var(--primary); padding:4px 12px; border-radius:20px; font-size:0.9rem;">24 Students</span>
+        <div class="view-toggle">
+          <span>Teacher</span>
+          <button class="toggle-btn active" id="teacherBtn">●</button>
+          <button class="toggle-btn" id="studentBtn">●</button>
+          <span>Student</span>
+        </div>
       </div>
 
       <div class="announcement">
@@ -94,7 +224,91 @@
       </div>
     </div>
 
-    <a href="hub.html" class="back">← Back to Hub</a>
+    <a href="#" class="back" onclick="window.history.back(); return false;">← Back to Hub</a>
   </div>
+
+  <script>
+    // Toggle between views
+    const teacherView = document.getElementById('teacherView');
+    const studentView = document.getElementById('studentView');
+    const teacherBtn = document.getElementById('teacherBtn');
+    const studentBtn = document.getElementById('studentBtn');
+
+    teacherBtn.addEventListener('click', () => {
+      teacherView.style.display = 'block';
+      studentView.style.display = 'none';
+      teacherBtn.classList.add('active');
+      studentBtn.classList.remove('active');
+    });
+
+    studentBtn.addEventListener('click', () => {
+      teacherView.style.display = 'none';
+      studentView.style.display = 'block';
+      studentBtn.classList.add('active');
+      teacherBtn.classList.remove('active');
+    });
+  </script>
+  <!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
 </body>
 </html>

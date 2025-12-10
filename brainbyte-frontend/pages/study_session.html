@@ -138,7 +138,6 @@
         <button class="tab-btn" data-tab="review">Review Mistakes</button>
       </div>
 
-      <!-- Topic Selector (all tabs) -->
       <div class="topic-grid">
         <div class="topic-card" data-topic="algebra">
           <div>🧮 Algebra</div>
@@ -182,38 +181,24 @@
   </div>
 
   <script>
-    // Lesson content by topic
     const lessons = {
       algebra: {
         title: "🧮 Algebra Basics",
         desc: "Algebra uses symbols (like x, y) to represent numbers in equations. The goal is to solve for the unknown.",
-        tips: [
-          "Isolate the variable on one side",
-          "Do the same operation to both sides",
-          "Check your answer by plugging it back in"
-        ]
+        tips: ["Isolate the variable on one side", "Do the same operation to both sides", "Check your answer by plugging it back in"]
       },
       geometry: {
         title: "📐 Geometry Fundamentals",
         desc: "Geometry studies shapes, sizes, angles, and dimensions. Key concepts include area, perimeter, and the Pythagorean theorem.",
-        tips: [
-          "Draw the shape if not provided",
-          "Label all known sides/angles",
-          "Use formulas: Area = base × height / 2 (triangle)"
-        ]
+        tips: ["Draw the shape if not provided", "Label all known sides/angles", "Use formulas: Area = base × height / 2 (triangle)"]
       },
       statistics: {
         title: "📊 Statistics Essentials",
         desc: "Statistics involves collecting, analyzing, and interpreting data. Common measures: mean, median, mode, range.",
-        tips: [
-          "Mean = average (sum / count)",
-          "Median = middle value when sorted",
-          "Mode = most frequent value"
-        ]
+        tips: ["Mean = average (sum / count)", "Median = middle value when sorted", "Mode = most frequent value"]
       }
     };
 
-    // Practice questions by topic (5 each)
     const questions = {
       algebra: [
         { q: "Solve for x: 2x + 4 = 10", choices: ["x=2", "x=3", "x=4", "x=5"], ans: 1 },
@@ -238,12 +223,10 @@
       ]
     };
 
-    // State
     let currentTopic = null;
     let userAnswers = {};
     let mistakes = JSON.parse(localStorage.getItem('study_mistakes') || '{}');
 
-    // DOM refs
     const topicCards = document.querySelectorAll('.topic-card');
     const tabBtns = document.querySelectorAll('.tab-btn');
     const learnContent = document.getElementById('learn-content');
@@ -259,7 +242,30 @@
     const practiceResult = document.getElementById('practice-result');
     const mistakesContainer = document.getElementById('mistakes-container');
 
-    // Tab switching
+    // ✅ SEND SESSION DATA TO STUDYBUDDY AI
+    function sendToStudyBuddy(topic, action = "learned", score = null) {
+      const userId = "demo_user";
+      const data = {
+        user_id: userId,
+        grade: "Secondary",
+        subject: "Math",
+        topic: lessons[topic]?.title || topic,
+        is_quiz: action === "quiz",
+        time_spent_sec: 120,
+        correct_answers: score?.correct || 0,
+        total_questions: score?.total || 5,
+        score: score ? Math.round((score.correct / score.total) * 100) : null,
+        engagement_minutes: 2,
+        difficulty_rating: 3
+      };
+
+      fetch('http://localhost:8000/ai/record-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).catch(err => console.log("AI call failed (ok for demo):", err));
+    }
+
     tabBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         tabBtns.forEach(b => b.classList.remove('active'));
@@ -272,7 +278,6 @@
       });
     });
 
-    // Topic selection
     topicCards.forEach(card => {
       card.addEventListener('click', () => {
         topicCards.forEach(c => c.classList.remove('selected'));
@@ -283,7 +288,6 @@
       });
     });
 
-    // Render Learn tab
     function renderLearn() {
       if (!currentTopic) return;
       const lesson = lessons[currentTopic];
@@ -296,9 +300,10 @@
         tipsList.appendChild(li);
       });
       lessonTips.classList.remove('hidden');
+      // ✅ LOG LEARN ACTION TO AI
+      sendToStudyBuddy(currentTopic, "learned");
     }
 
-    // Render Practice tab
     function renderPractice() {
       if (!currentTopic) {
         practiceTitle.textContent = "Select a topic to practice";
@@ -337,7 +342,6 @@
       practiceResult.innerHTML = '';
     }
 
-    // Submit answers
     submitBtn.addEventListener('click', () => {
       if (!currentTopic) return;
       const qList = questions[currentTopic];
@@ -352,21 +356,22 @@
           newMistakes.push({ topic: currentTopic, question: q, userAns, correctAns: q.ans });
         }
       });
-      // Save mistakes to localStorage
-      if (!mistakes[currentTopic]) mistakes[currentTopic] = [];
       mistakes[currentTopic] = newMistakes;
       localStorage.setItem('study_mistakes', JSON.stringify(mistakes));
-      // Show result
+
       practiceResult.innerHTML = `
         <div style="color:${correct === qList.length ? 'var(--success)' : 'var(--warning)'}; font-weight:bold;">
           You got ${correct}/${qList.length} correct!
         </div>
         ${correct < qList.length ? '<div>Review your mistakes in the "Review Mistakes" tab.</div>' : ''}
       `;
-      renderMistakes(); // update immediately
+      renderMistakes();
+
+      // ✅ SEND QUIZ RESULT TO AI
+      const total = qList.length;
+      sendToStudyBuddy(currentTopic, "quiz", { correct, total });
     });
 
-    // Render Review tab
     function renderMistakes() {
       let hasMistakes = false;
       mistakesContainer.innerHTML = '';
@@ -393,8 +398,69 @@
       }
     }
 
-    // Init
     renderMistakes();
   </script>
+  <!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
 </body>
 </html>

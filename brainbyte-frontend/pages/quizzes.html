@@ -29,7 +29,6 @@
       position:relative;
       overflow:hidden;
     }
-    /* falling emoji backdrop */
     .emoji-backdrop{
       position:fixed;
       inset:0;
@@ -142,7 +141,6 @@
     .winnerName { font-weight:700; font-size:18px; margin:0; color:#fff; }
     .winnerSub { color:var(--muted); margin:0; font-size:13px; }
     footer { color:var(--muted); text-align:center; margin-top:10px; font-size:13px }
-    /* mute button */
     .muteBtn {
       background: transparent;
       border:1px solid rgba(255,255,255,0.04);
@@ -231,11 +229,7 @@
           <button id="skipBtn" class="btn-ghost">Skip</button>
           <button id="endNow" class="btn-ghost">End Game Now</button>
         </div>
-        <div style="margin-left:auto">
-          <label class="small" style="margin-right:8px">Keyboard answer for</label>
-          <select id="keyboardPlayerSelect"></select>
-          <span class="small muted" style="margin-left:8px">Press 1–4 to answer</span>
-        </div>
+        <!-- ✅ REMOVED: Keyboard answer UI -->
       </div>
       <div id="playerPanelsContainer" style="margin-top:12px"></div>
       <div class="log" id="gameLog"></div>
@@ -244,7 +238,6 @@
     <div class="card" id="resultsCard" style="display:none">
       <div class="trophyWrap">
         <div class="trophy" id="trophyEl" aria-hidden="true">
-          <!-- simple trophy SVG -->
           <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M48 10H16v6a12 12 0 0 0 12 12h8a12 12 0 0 0 12-12v-6z" fill="#fff" opacity="0.95"/>
             <path d="M20 18a8 8 0 0 1-8-8v-2h8v10z" fill="#ffd66b"/>
@@ -263,7 +256,6 @@
       <div style="margin-top:12px; display:flex; justify-content:center; gap:10px; flex-wrap:wrap;">
         <button id="backSetup" class="btn-ghost">Back to Setup</button>
         <button id="playAgain" class="btn-ghost">Play Again</button>
-        <!-- ✅ ADDED: Back to Hub -->
         <a href="hub.html" style="text-decoration:none;">
           <button class="btn-ghost">← Back to Hub</button>
         </a>
@@ -300,8 +292,7 @@
       ensureAudio();
       const ctx = audioCtx;
       const now = ctx.currentTime;
-      // three-osc chord (major triad) with gain envelope
-      const freqs = [440, 550, 660]; // A4, C#5, E5-ish
+      const freqs = [440, 550, 660];
       const master = ctx.createGain(); master.gain.setValueAtTime(0.0001, now);
       master.connect(ctx.destination);
       master.gain.exponentialRampToValueAtTime(0.6, now + 0.02);
@@ -333,7 +324,6 @@
       o.connect(g); g.connect(ctx.destination);
       o.start(now); o.stop(now + 0.12);
     }
-    // small celebratory arpeggio of pops
     function playPops(muted){
       if (muted) return;
       playPop(false);
@@ -366,7 +356,7 @@
     }
     for(let i=0;i<18;i++) setTimeout(()=>spawnEmoji(i), i*300);
     setInterval(()=>spawnEmoji(), 700);
-    // ===== quiz data (6 Q / subject) - kept from your last set =====
+    // ===== quiz data (6 Q / subject) - FIXED MATH QUESTIONS =====
     const QUESTIONS_BY_LEVEL = {
       "O-Level": {
         "Math": [
@@ -439,7 +429,9 @@
       "A-Level": {
         "Math": [
           { text: "Evaluate limit as x→0 of sin(x)/x", choices:["0","1","∞","-1"], correctIndex:1 },
-          { text: "If eigenvalue λ=2, which can be true?", choices:["Matrix invertible?","Determinant includes λ","Eigenvector exists","None"], correctIndex:2 },
+          // ✅ REPLACED problematic eigenvalue question
+          { text: "If A is a 2×2 matrix with trace 5 and determinant 6, what are possible eigenvalues?", 
+            choices:["2 and 3","1 and 6","5 and 1","0 and 5"], correctIndex:0 },
           { text: "Integral of 1/x dx is", choices:["ln|x| + C","1/x + C","x + C","e^x + C"], correctIndex:0 },
           { text: "Solve: x^2 - 4 = 0", choices:["x=2 or -2","x=4","x=0","x=1"], correctIndex:0 },
           { text: "Derivative of sin(x) is", choices:["cos(x)","-sin(x)","sin(x)","-cos(x)"], correctIndex:0 },
@@ -471,12 +463,12 @@
         ]
       }
     };
-    /* storage + misc */
     const BALANCES_KEY = 'bb_balances_v1';
     const HISTORY_KEY = 'bb_history_v1';
     const MUTE_KEY = 'bb_muted_v1';
     const BRAINBITS_AWARD = 10;
-    // DOM refs (setup)
+
+    // DOM refs
     const levelSelect = document.getElementById('levelSelect');
     const subjectSelect = document.getElementById('subjectSelect');
     const timeLimitInput = document.getElementById('timeLimit');
@@ -489,7 +481,6 @@
     const howManyInput = document.getElementById('howMany');
     const startBtn = document.getElementById('startBtn');
     const resetBtn = document.getElementById('resetBtn');
-    // DOM refs (live)
     const liveCard = document.getElementById('liveCard');
     const currentSubjectEl = document.getElementById('currentSubject');
     const qText = document.getElementById('qText');
@@ -497,8 +488,6 @@
     const timeLeft = document.getElementById('timeLeft');
     const progressBar = document.getElementById('progressBar');
     const playerPanelsContainer = document.getElementById('playerPanelsContainer');
-    const keyboardPlayerSelect = document.getElementById('keyboardPlayerSelect');
-    // DOM refs (results/history)
     const gameLog = document.getElementById('gameLog');
     const resultsCard = document.getElementById('resultsCard');
     const finalResults = document.getElementById('finalResults');
@@ -513,14 +502,17 @@
     const clearBalancesBtn = document.getElementById('clearBalances');
     const leaderboardTbody = document.querySelector('#leaderboard tbody');
     const muteBtn = document.getElementById('muteBtn');
-    // state
+    // ✅ NEW: Skip and End buttons
+    const skipBtn = document.getElementById('skipBtn');
+    const endNow = document.getElementById('endNow');
+
     let setupPlayers = [];
     let runtimeState = null;
     let qIndex = 0;
     let qTimer = null;
     let qEndAt = 0;
     let answeringEnabled = false;
-    // helpers
+
     function mkId(){ return Math.random().toString(36).slice(2,9); }
     function nowStr(){ return new Date().toLocaleString(); }
     function logMsg(m){ const d=document.createElement('div'); d.textContent=`[${nowStr()}] ${m}`; gameLog.prepend(d); }
@@ -535,8 +527,9 @@
       muteBtn.textContent = muted ? '🔇 Muted' : '🔊 Sound';
       muteBtn.style.opacity = muted ? 0.7 : 1;
     }
+
     muteBtn.onclick = () => { setMuted(!getMuted()); };
-    // populate subjects
+
     function populateSubjects(){
       subjectSelect.innerHTML = '';
       const lvl = levelSelect.value;
@@ -545,7 +538,7 @@
     }
     levelSelect.onchange = populateSubjects;
     populateSubjects();
-    // players UI
+
     function renderSetupPlayers(){
       playersContainer.innerHTML = '';
       setupPlayers.forEach(p => {
@@ -558,24 +551,45 @@
       document.querySelectorAll('.removeBtn').forEach(b=>{ b.onclick = ()=>{ const id=b.dataset.id; setupPlayers = setupPlayers.filter(x=>x.id!==id); renderSetupPlayers(); }; });
       refreshLeaderboard();
     }
+
     addPlayerBtn.onclick = () => {
       const nm = (newNameInput.value||'').trim() || undefined;
       const type = playerTypeSelect.value;
       addSetupPlayer(nm, type);
       newNameInput.value='';
     };
+
     function addSetupPlayer(name, type='human'){
       const id = mkId();
       setupPlayers.push({ id, name: name || (type==='bot' ? `Bot-${id.slice(0,4)}` : `Student-${id.slice(0,4)}`), type });
       renderSetupPlayers();
     }
+
     addBotManyBtn.onclick = () => { addSetupPlayer(undefined,'bot'); addSetupPlayer(undefined,'bot'); addSetupPlayer(undefined,'bot'); };
+
     addManyStudentsBtn.onclick = () => {
-      let n = parseInt(howManyInput.value)||1; if(n<1) n=1;
-      for(let i=0;i<n;i++){ addSetupPlayer(`Student ${setupPlayers.length + 1}`, 'human'); }
+      let n = parseInt(howManyInput.value)||1;
+      if(n<1) n=1;
+      const baseNum = setupPlayers.filter(p => p.type === 'human' && p.name.startsWith('Student')).length + 1;
+      for(let i=0; i<n; i++){
+        addSetupPlayer(`Student ${baseNum + i}`, 'human');
+      }
     };
+
     resetBtn.onclick = () => { if(!confirm('Reset players?')) return; setupPlayers = []; renderSetupPlayers(); };
-    // start quiz
+
+    // ✅ NEW: Skip and End functionality
+    skipBtn.onclick = () => {
+      if (answeringEnabled) {
+        revealAndProceed();
+      }
+    };
+    endNow.onclick = () => {
+      if (answeringEnabled) {
+        finishGame();
+      }
+    };
+
     function startQuiz(){
       if(setupPlayers.length < 2) return alert('Add at least 2 players.');
       const lvl = levelSelect.value; const subj = subjectSelect.value;
@@ -590,7 +604,7 @@
       beginLiveRun(runtime);
     }
     startBtn.onclick = startQuiz;
-    // live runner
+
     function beginLiveRun(config){
       runtimeState = {
         config,
@@ -604,11 +618,11 @@
       document.querySelectorAll('.hide-live').forEach(el => el.classList.add('hide-live'));
       currentSubjectEl.textContent = `${config.level} · ${config.subject}`;
       renderPlayerPanels();
-      fillKeyboardPlayerSelect();
       qIndex = 0;
       gameLog.innerHTML = '';
       showQuestion();
     }
+
     function renderPlayerPanels(){
       playerPanelsContainer.innerHTML = '';
       const playersDiv = document.createElement('div'); playersDiv.className='players';
@@ -625,10 +639,7 @@
       playerPanelsContainer.appendChild(playersDiv);
       refreshLeaderboard();
     }
-    function fillKeyboardPlayerSelect(){
-      keyboardPlayerSelect.innerHTML = '';
-      runtimeState.players.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = p.name; keyboardPlayerSelect.appendChild(opt); });
-    }
+
     function showQuestion(){
       if(qIndex >= runtimeState.questionSet.length){ finishGame(); return; }
       const q = runtimeState.questionSet[qIndex];
@@ -663,7 +674,7 @@
         timeLeft.textContent = left;
         if(left <= 0) { clearInterval(qTimer); qTimer = null; revealAndProceed(); }
       }, 100);
-      // bots submit
+
       runtimeState.players.filter(p=>p.type==='bot').forEach(bot => {
         const willAnswer = Math.random()*100 < (bot.botConfig.accuracy || 75);
         if(!willAnswer) return;
@@ -678,17 +689,9 @@
         }, delay);
       });
     }
-    document.addEventListener('keydown', (ev) => {
-      if(!answeringEnabled) return;
-      const k = ev.key;
-      if(!/^[1-9]$/.test(k)) return;
-      const idx = parseInt(k,10)-1;
-      const pid = keyboardPlayerSelect.value;
-      if(!pid) return;
-      const q = runtimeState.questionSet[qIndex];
-      if(!q || idx < 0 || idx >= q.choices.length) return;
-      recordAnswer(pid, idx);
-    });
+
+    // ✅ Removed global key listener (no keyboard answer)
+
     function recordAnswer(playerId, choiceIdx){
       const p = runtimeState.players.find(x=>x.id===playerId);
       const q = runtimeState.questionSet[qIndex];
@@ -712,7 +715,7 @@
       }
       const container = document.getElementById('choices_container_'+p.id);
       if(container) Array.from(container.children).forEach(btn => { btn.classList.add('disabled'); btn.disabled = true; });
-      logMsg(`${p.name} answered (hidden during live)`);
+      logMsg(`${p.name} answered`);
       const e1 = document.getElementById('correct_'+p.id); if(e1) e1.textContent = p.stats.correctCount;
       const e2 = document.getElementById('tms_'+p.id); if(e2) e2.textContent = p.stats.totalResponseTime;
       const e3 = document.getElementById('score_'+p.id); if(e3) e3.textContent = p.stats.score;
@@ -720,12 +723,14 @@
       if(allAnswered){ clearInterval(qTimer); qTimer = null; revealAndProceed(); }
       refreshLeaderboard();
     }
+
     function updateProgressBar(){
       const total = Math.max(5, parseInt(runtimeState.config.timeLimitSec)||12) * 1000;
       const remaining = Math.max(0, qEndAt - Date.now());
       const pct = Math.max(0, Math.min(100, Math.round((remaining / total) * 100)));
       progressBar.style.width = pct + '%';
     }
+
     function revealAndProceed(){
       answeringEnabled = false;
       runtimeState.players.forEach(p=>{
@@ -736,6 +741,7 @@
       if(qIndex >= runtimeState.questionSet.length) finishGame();
       else setTimeout(()=> showQuestion(), 700);
     }
+
     function finishGame(){
       answeringEnabled = false;
       clearInterval(qTimer); qTimer = null;
@@ -752,7 +758,6 @@
         hist.push({ timestamp: nowStr(), level: runtimeState.config.level, subject: runtimeState.config.subject, players: results.map(r=>({ name:r.name, correct:r.correctCount })), winner: winner.name, awarded });
         saveHistory(hist);
 
-        // ✅ SEND DATA TO STUDYBUDDY AI
         fetch('http://localhost:8000/ai/record-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -770,12 +775,11 @@
           })
         }).catch(() => {});
 
-        // ✅ SHOW CAREER AI POPUP (Premium mock)
         setTimeout(() => {
           fetch(`http://localhost:8000/ai/career-report/${winner.name.replace(/\s+/g, '_').toLowerCase()}?is_premium=true`)
             .then(res => res.json())
             .then(report => {
-              let msg = `🧠 **BrainByte Career AI**\n\nTop match: **${report.careers[0]}**\n\nSkills:\n`;
+              let msg = `🧠 **BrainByte Career AI**\nTop match: **${report.careers[0]}**\nSkills:\n`;
               for (let skill in report.skill_ratings) {
                 msg += `- ${skill}: ${report.skill_ratings[skill]}/5\n`;
               }
@@ -788,7 +792,7 @@
       document.querySelectorAll('.hide-live').forEach(el => el.classList.remove('hide-live'));
       showResults(results, awarded);
     }
-    // show results + celebrate
+
     function showResults(results, awarded){
       liveCard.style.display = 'none';
       finalResults.innerHTML = '';
@@ -802,25 +806,22 @@
       winnerSub.textContent = `Brainbits awarded: ${winner ? awarded : 0}`;
       finalResults.appendChild(tbl);
       resultsCard.style.display = 'block';
-      // trophy animation & sound & confetti
+
       const muted = getMuted();
-      // show trophy (animate)
       trophyEl.classList.remove('show');
-      // force reflow to restart animation
       void trophyEl.offsetWidth;
       setTimeout(()=> trophyEl.classList.add('show'), 60);
-      // confetti + sounds
+
       if (!muted) {
         burstConfetti();
         playPops(false);
         setTimeout(()=> playFanfare(false), 240);
       } else {
-        // still show some confetti (muted users might still like visuals) - comment out if you want no confetti when muted
         burstConfetti();
       }
-      // small extra bursts
       setTimeout(()=> burstConfetti(), 450);
     }
+
     backSetup.onclick = () => {
       resultsCard.style.display = 'none';
       document.getElementById('setupCard').style.display = 'block';
@@ -835,10 +836,9 @@
       liveCard.style.display = 'block';
       gameLog.innerHTML = '';
       renderPlayerPanels();
-      fillKeyboardPlayerSelect();
       showQuestion();
     };
-    // leaderboard/history/balances
+
     function refreshLeaderboard(){
       const bal = loadBalances();
       leaderboardTbody.innerHTML = '';
@@ -853,16 +853,79 @@
         leaderboardTbody.appendChild(tr);
       });
     }
+
     function renderHistory(){ const h = loadHistory(); historyList.innerHTML=''; if(!h.length){ historyList.textContent='(no history)'; return;} h.slice().reverse().forEach(item=>{ const div=document.createElement('div'); div.innerHTML = `<strong>${item.timestamp}</strong> · ${item.level} - ${item.subject} · Winner: ${item.winner} (+${item.awarded} bb)<div class="small muted">${item.players.map(p=>p.name+':'+p.correct).join(' | ')}</div>`; div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)'; historyList.appendChild(div); }); }
     clearHistoryBtn.onclick = ()=>{ if(!confirm('Clear history?')) return; localStorage.removeItem(HISTORY_KEY); renderHistory(); };
     function renderBalances(){ const b = loadBalances(); balancesList.innerHTML=''; const keys = Object.keys(b); if(!keys.length){ balancesList.textContent='(no balances yet)'; return;} keys.forEach(k=>{ const div=document.createElement('div'); div.innerHTML = `<strong>${k}</strong> · ${b[k]} bb`; div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)'; balancesList.appendChild(div); }) }
     clearBalancesBtn.onclick = ()=>{ if(!confirm('Clear balances?')) return; localStorage.removeItem(BALANCES_KEY); renderBalances(); refreshLeaderboard(); };
-    // initial UI + demo players
+
     renderHistory(); renderBalances();
     addSetupPlayer('You','human'); addSetupPlayer('BotA','bot'); addSetupPlayer('BotB','bot');
     renderSetupPlayers(); refreshLeaderboard();
     updateMuteUI();
   })();
   </script>
+  <!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
 </body>
 </html>

@@ -1,78 +1,585 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BrainByte - Profile</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BrainByte — Profile</title>
+
   <style>
-    :root {
-      --primary: #6a11cb;
-      --secondary: #00bfff;
-      --dark: #0f0c29;
-      --darker: #0a081a;
-      --card-bg: rgba(255, 255, 255, 0.08);
+    :root{
+      --bg-1:#0b0620;
+      --bg-2:#1a0f39;
+      --card:#15102a;
+      --primary-start:#9a4bff;
+      --primary-end:#39b8ff;
+      --muted:#9aa8b2;
+      --glass: rgba(255,255,255,0.02);
+      --accent:#caa6ff;
+      --text:#e9e7ff;
     }
-    * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
-    body {
-      background: linear-gradient(135deg, var(--darker), var(--dark));
-      color: white;
-      min-height: 100vh;
-      padding-bottom: 40px;
+    *{box-sizing:border-box}
+    html,body{height:100%; margin:0; font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial}
+    body{
+      background: radial-gradient(900px 360px at 10% 10%, rgba(58,40,122,0.12), transparent 6%),
+                  linear-gradient(120deg,var(--bg-1),var(--bg-2));
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
     }
-    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-    .logo { font-size: 1.8rem; font-weight: bold; margin-bottom: 20px; }
-    .logo span { background: linear-gradient(90deg, var(--secondary), var(--primary)); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .card {
-      background: var(--card-bg);
-      border-radius: 18px;
-      padding: 24px;
-      margin-bottom: 20px;
-      border: 1px solid rgba(255,255,255,0.1);
+
+    .container{ max-width:980px; margin:0 auto; }
+
+    header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:20px;
     }
-    .avatar { font-size: 4rem; text-align: center; margin: 10px 0; }
-    .stats { display: flex; justify-content: space-around; margin: 20px 0; }
-    .stat { text-align: center; }
-    .stat-value { font-size: 1.4rem; font-weight: bold; color: gold; }
-    .stat-label { font-size: 0.9rem; color: #aaa; }
-    .btn { padding: 10px 20px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    .btn-primary { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
-    .back { display: block; margin-top: 20px; color: var(--secondary); text-align: center; text-decoration: none; }
+    .brand{ display:flex; gap:10px; align-items:center; font-weight:800; letter-spacing:0.2px }
+    .brand .brain{ font-size:20px; }
+    .top-controls{ display:flex; gap:10px; align-items:center; color:var(--muted) }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border-radius:14px;
+      padding:18px;
+      border:1px solid rgba(255,255,255,0.03);
+      box-shadow: 0 12px 28px rgba(2,8,23,0.5);
+    }
+
+    .profile-grid{
+      display:grid;
+      grid-template-columns: 220px 1fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    /* Avatar area */
+    .avatar-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+    .avatar{
+      width:160px;
+      height:160px;
+      border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.06));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.04);
+      cursor:pointer;
+      position:relative;
+    }
+    .avatar img{ width:100%; height:100%; object-fit:cover; display:block }
+    .avatar-empty{
+      font-size:44px;
+      opacity:0.9;
+    }
+    .avatar-note{ font-size:13px; color:var(--muted); text-align:center }
+
+    input[type="file"]{ display:none }
+
+    /* profile form */
+    .profile-form{ display:flex; flex-direction:column; gap:12px; }
+    label{ font-size:13px; color:var(--muted) }
+    input[type="text"], textarea, select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,0.03);
+      background:var(--glass);
+      color:var(--text);
+      outline:none;
+      font-size:14px;
+    }
+    textarea{ min-height:96px; resize:vertical; }
+
+    .row{ display:flex; gap:10px; align-items:center; }
+    .small{ font-size:13px; color:var(--muted) }
+
+    .badges{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+    .badge{
+      background:linear-gradient(90deg,var(--primary-start),var(--primary-end));
+      color:#021026;
+      padding:6px 10px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:13px;
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+    }
+    .badge .remove{
+      cursor:pointer;
+      opacity:0.6;
+      font-size:12px;
+    }
+
+    .controls{
+      display:flex;
+      gap:12px;
+      margin-top:12px;
+    }
+    button{
+      padding:10px 14px;
+      border-radius:10px;
+      border:0;
+      cursor:pointer;
+      font-weight:700;
+      color:#021026;
+      background:linear-gradient(90deg,var(--primary-start),var(--primary-end));
+      box-shadow:0 10px 26px rgba(58,40,122,0.12);
+    }
+    button.secondary{
+      background:transparent;
+      color:var(--text);
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow:none;
+    }
+    .danger{ background:linear-gradient(90deg,#ff7b7b,#ff4b4b); color:white }
+
+    .leaderboard-card{ margin-top:14px; }
+
+    .rank{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:18px;
+      font-weight:800;
+      color:var(--primary-end);
+    }
+
+    .meta{
+      margin-top:8px;
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    /* responsive */
+    @media (max-width:800px){
+      .profile-grid{ grid-template-columns: 1fr; }
+      .avatar{ width:130px; height:130px }
+    }
+
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">🧠 <span>BrainByte</span></div>
-    
-    <div class="card">
-      <div class="avatar">🧑‍🎓</div>
-      <h2 style="text-align:center;">Alex Johnson</h2>
-      
-      <div class="stats">
-        <div class="stat">
-          <div class="stat-value">12</div>
-          <div class="stat-label">Level</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value">4,280</div>
-          <div class="stat-label">XP</div>
-        </div>
-        <div class="stat">
-          <div class="stat-value">420</div>
-          <div class="stat-label">BrainBytes</div>
+    <header>
+      <div class="brand">
+        <div class="brain">🧠</div>
+        <div>
+          <div style="font-weight:900">BrainByte</div>
+          <div style="font-size:12px; color:var(--muted)">Profile</div>
         </div>
       </div>
 
-      <h3>Pets & House</h3>
-      <p><em>(Unlock more with XP!)</em></p>
-      <div style="display:flex; gap:15px; margin:15px 0;">
-        <div style="text-align:center;">🐱<br><small>Lucky</small></div>
-        <div style="text-align:center;">🏠<br><small>Basic Hut</small></div>
+      <div class="top-controls">
+        <div id="top-balance" class="small">0 Brainbits</div>
+        <a href="hub.html" style="text-decoration:none"><button class="secondary">Go back to Hub</button></a>
       </div>
-      <button class="btn btn-primary" onclick="alert('✨ Premium feature: Customize your house!')">Upgrade House</button>
-    </div>
+    </header>
 
-    <a href="hub.html" class="back">← Back to Hub</a>
+    <section class="card profile-grid" aria-labelledby="profile-heading">
+      <div class="avatar-wrap">
+        <label for="avatar-input" class="avatar" id="avatar-btn" title="Click to change avatar">
+          <span class="avatar-empty" id="avatar-placeholder">🧠</span>
+          <img id="avatar-img" alt="profile avatar" style="display:none" />
+        </label>
+        <input id="avatar-input" type="file" accept="image/*" />
+
+        <div class="avatar-note small">Click avatar to upload. PNG/JPG up to 2MB.</div>
+
+        <div class="card leaderboard-card" style="width:100%; text-align:center;">
+          <div style="font-size:13px; color:var(--muted)">Leaderboard Rank</div>
+          <div class="rank" id="profile-rank">#—</div>
+          <div class="meta" id="profile-points">Points: —</div>
+        </div>
+
+        <div style="width:100%; margin-top:12px;">
+          <div style="font-size:13px; color:var(--muted); margin-bottom:8px">Badges</div>
+          <div id="badges-list" class="badges" aria-live="polite"></div>
+
+          <div style="margin-top:10px;" class="row">
+            <input id="new-badge" type="text" placeholder="Add badge (e.g., Top Scorer)" style="flex:1; padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.04); background:var(--glass); color:var(--text)"/>
+            <button id="add-badge" class="secondary" style="padding:8px 10px; background:transparent; color:var(--text); border:1px solid rgba(255,255,255,0.04)">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 id="profile-heading" style="margin:0 0 8px 0">Your Profile</h2>
+
+        <div class="profile-form card" style="padding:16px;">
+          <div>
+            <label for="display-name">Display name</label>
+            <input id="display-name" type="text" placeholder="Your display name" />
+          </div>
+
+          <div>
+            <label for="bio">Bio</label>
+            <textarea id="bio" placeholder="A short bio about you..."></textarea>
+          </div>
+
+          <div>
+            <label for="ranking">Ranking (number)</label>
+            <input id="ranking" type="number" min="1" placeholder="e.g., 12" />
+            <div class="meta">This is your position on the leaderboard. Lower is better (1 = top).</div>
+          </div>
+
+          <div style="margin-top:8px;">
+            <label for="points">Points</label>
+            <input id="points" type="number" min="0" placeholder="e.g., 420" />
+          </div>
+
+          <div class="controls">
+            <button id="save-profile">Save Profile</button>
+            <button id="reset-profile" class="secondary">Reset</button>
+            <button id="sign-out" class="danger">Sign Out</button>
+          </div>
+
+          <div id="save-msg" class="meta" style="margin-top:10px; display:none"></div>
+        </div>
+
+        <div style="margin-top:12px" class="card">
+          <div style="font-weight:800">Preview</div>
+          <div style="margin-top:10px; display:flex; gap:12px; align-items:center;">
+            <div style="width:64px; height:64px; border-radius:12px; overflow:hidden; background:var(--glass); display:flex; align-items:center; justify-content:center;" id="preview-avatar">
+              <span style="font-size:28px" id="preview-avatar-emoji">🧠</span>
+            </div>
+            <div>
+              <div id="preview-name" style="font-weight:800">Your Name</div>
+              <div id="preview-bio" class="meta" style="max-width:640px">Your bio will appear here. Keep it short and helpful!</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
   </div>
+
+  <script>
+    // Profile page using localStorage
+    (function(){
+      const PROFILE_KEY = 'brainbyte_profile_v1';
+      const BAL_KEY = 'brainbyte_balance_v1';
+
+      // elements
+      const avatarInput = document.getElementById('avatar-input');
+      const avatarImg = document.getElementById('avatar-img');
+      const avatarPlaceholder = document.getElementById('avatar-placeholder');
+      const avatarBtn = document.getElementById('avatar-btn');
+
+      const displayNameInput = document.getElementById('display-name');
+      const bioInput = document.getElementById('bio');
+      const rankingInput = document.getElementById('ranking');
+      const pointsInput = document.getElementById('points');
+
+      const saveBtn = document.getElementById('save-profile');
+      const resetBtn = document.getElementById('reset-profile');
+      const signOutBtn = document.getElementById('sign-out');
+
+      const addBadgeBtn = document.getElementById('add-badge');
+      const newBadgeInput = document.getElementById('new-badge');
+      const badgesList = document.getElementById('badges-list');
+
+      const topBalance = document.getElementById('top-balance');
+
+      const previewName = document.getElementById('preview-name');
+      const previewBio = document.getElementById('preview-bio');
+      const previewAvatar = document.getElementById('preview-avatar');
+      const previewAvatarEmoji = document.getElementById('preview-avatar-emoji');
+
+      const saveMsg = document.getElementById('save-msg');
+      const profileRankEl = document.getElementById('profile-rank');
+      const profilePointsEl = document.getElementById('profile-points');
+
+      // default profile
+      const DEFAULT = {
+        name: 'Student',
+        bio: 'I love learning with BrainByte!',
+        avatarDataUrl: '', // data URL
+        badges: ['Welcome'],
+        rank: null,
+        points: null
+      };
+
+      // load profile
+      function loadProfile(){
+        try {
+          const raw = localStorage.getItem(PROFILE_KEY);
+          const p = raw ? JSON.parse(raw) : DEFAULT;
+          // merge defaults
+          const profile = Object.assign({}, DEFAULT, p || {});
+          return profile;
+        } catch(e){
+          return DEFAULT;
+        }
+      }
+
+      // save
+      function saveProfile(profile){
+        localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+      }
+
+      // render top balance
+      function renderBalance(){
+        const b = Number(localStorage.getItem(BAL_KEY));
+        topBalance.textContent = (isNaN(b) ? 0 : b) + ' Brainbits';
+      }
+
+      // populate UI from profile object
+      function renderProfile(profile){
+        displayNameInput.value = profile.name || '';
+        bioInput.value = profile.bio || '';
+        rankingInput.value = profile.rank || '';
+        pointsInput.value = profile.points || '';
+
+        // avatar
+        if(profile.avatarDataUrl){
+          avatarImg.src = profile.avatarDataUrl;
+          avatarImg.style.display = 'block';
+          avatarPlaceholder.style.display = 'none';
+          previewAvatar.innerHTML = `<img src="${profile.avatarDataUrl}" alt="avatar" style="width:100%;height:100%;object-fit:cover">`;
+        } else {
+          avatarImg.style.display = 'none';
+          avatarPlaceholder.style.display = 'block';
+          previewAvatar.innerHTML = `<span style="font-size:28px">🧠</span>`;
+        }
+
+        // badges
+        badgesList.innerHTML = '';
+        (profile.badges || []).forEach((b, idx) => {
+          const el = document.createElement('div');
+          el.className = 'badge';
+          el.setAttribute('data-i', idx);
+          el.innerHTML = `<span>${escapeHtml(b)}</span><span class="remove" title="Remove badge">✕</span>`;
+          badgesList.appendChild(el);
+        });
+
+        // preview text
+        previewName.textContent = profile.name || 'Your Name';
+        previewBio.textContent = profile.bio || 'Your bio will appear here.';
+
+        profileRankEl.textContent = profile.rank ? `#${profile.rank}` : '#—';
+        profilePointsEl.textContent = 'Points: ' + (profile.points != null && profile.points !== '' ? profile.points : '—');
+
+        // wire remove badge handlers
+        badgesList.querySelectorAll('.remove').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const parent = btn.closest('.badge');
+            const idx = Number(parent.getAttribute('data-i'));
+            profile.badges.splice(idx, 1);
+            saveProfile(profile);
+            renderProfile(profile);
+          });
+        });
+      }
+
+      // helper escape
+      function escapeHtml(s){
+        if(!s) return '';
+        return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      }
+
+      // upload avatar
+      avatarInput.addEventListener('change', (ev) => {
+        const f = ev.target.files && ev.target.files[0];
+        if(!f) return;
+        if(!f.type.startsWith('image/')) {
+          alert('Please select an image file.');
+          return;
+        }
+        if(f.size > 2 * 1024 * 1024){
+          if(!confirm('Image is larger than 2MB and may be resized/stored large. Continue?')) return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e){
+          const dataUrl = e.target.result;
+          const profile = loadProfile();
+          profile.avatarDataUrl = dataUrl;
+          saveProfile(profile);
+          renderProfile(profile);
+        };
+        reader.readAsDataURL(f);
+      });
+
+      // clicking avatar triggers file input
+      avatarBtn.addEventListener('click', () => avatarInput.click());
+
+      // add badge
+      addBadgeBtn.addEventListener('click', () => {
+        const v = newBadgeInput.value.trim();
+        if(!v) return;
+        const profile = loadProfile();
+        profile.badges = profile.badges || [];
+        profile.badges.push(v);
+        saveProfile(profile);
+        newBadgeInput.value = '';
+        renderProfile(profile);
+      });
+
+      // auto-update preview when editing name/bio/points/rank
+      [displayNameInput, bioInput, rankingInput, pointsInput].forEach(el => {
+        el.addEventListener('input', () => {
+          previewName.textContent = displayNameInput.value || 'Your Name';
+          previewBio.textContent = bioInput.value || 'Your bio will appear here.';
+          profileRankEl.textContent = rankingInput.value ? `#${rankingInput.value}` : '#—';
+          profilePointsEl.textContent = 'Points: ' + (pointsInput.value ? pointsInput.value : '—');
+        });
+      });
+
+      // save
+      saveBtn.addEventListener('click', () => {
+        const profile = loadProfile();
+        profile.name = displayNameInput.value.trim() || profile.name || DEFAULT.name;
+        profile.bio = bioInput.value.trim() || '';
+        const r = rankingInput.value;
+        profile.rank = (r !== '') ? Number(r) : null;
+        const p = pointsInput.value;
+        profile.points = (p !== '') ? Number(p) : null;
+        saveProfile(profile);
+        saveMsg.textContent = 'Profile saved ✓';
+        saveMsg.style.display = 'block';
+        setTimeout(()=> saveMsg.style.display = 'none', 2000);
+        renderProfile(profile);
+      });
+
+      // reset to defaults
+      resetBtn.addEventListener('click', () => {
+        if(!confirm('Reset profile to defaults?')) return;
+        localStorage.removeItem(PROFILE_KEY);
+        const profile = loadProfile();
+        renderProfile(profile);
+      });
+
+      // sign out: clear session-like keys (non-destructive: we only remove the profile and session marker if present)
+      signOutBtn.addEventListener('click', () => {
+        if(!confirm('Sign out? This will clear your local profile and return you to the hub.')) return;
+        // clear profile and optional session keys
+        localStorage.removeItem(PROFILE_KEY);
+        // Optionally remove session key if used by hub
+        if(localStorage.getItem('brainbyte_session')) localStorage.removeItem('brainbyte_session');
+        // redirect to hub (index.html)
+        window.location.href = 'index.html';
+      });
+
+      // initial render
+      renderBalance();
+      const profile = loadProfile();
+      renderProfile(profile);
+
+      // keep top balance updated if changed elsewhere
+      window.addEventListener('storage', (e) => {
+        if(e.key === BAL_KEY) renderBalance();
+      });
+
+    })();
+
+  </script>
+  <!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+<!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
 </body>
 </html>

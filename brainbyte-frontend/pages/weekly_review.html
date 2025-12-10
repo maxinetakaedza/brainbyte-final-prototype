@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BrainByte - Weekly Review</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    :root {
+      --primary: #6a11cb;
+      --secondary: #00bfff;
+      --success: #2ecc71;
+      --warning: #f39c12;
+      --dark: #0f0c29;
+      --darker: #0a081a;
+      --card-bg: rgba(255, 255, 255, 0.08);
+    }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', Arial, sans-serif;
+    }
+    body {
+      background: linear-gradient(135deg, var(--darker), var(--dark));
+      color: white;
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .logo {
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: linear-gradient(90deg, var(--secondary), var(--primary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      background: rgba(255,255,255,0.08);
+      border: none;
+      color: #ccc;
+      padding: 10px 20px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+    .form-group {
+      margin: 16px 0;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    .form-group textarea, .form-group input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(10, 5, 20, 0.6);
+      border: 1px solid #4a0082;
+      color: white;
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    .toggle span { font-weight: bold; }
+    .toggle input { transform: scale(1.3); }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 16px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      color: white;
+    }
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin: 16px 0;
+    }
+    .skill-item {
+      background: rgba(0,0,0,0.3);
+      padding: 12px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stars {
+      color: gold;
+      font-size: 1.2rem;
+      margin-top: 4px;
+    }
+    .careers-list {
+      list-style: none;
+      padding: 0;
+    }
+    .careers-list li {
+      padding: 10px;
+      background: rgba(0,0,0,0.3);
+      margin: 6px 0;
+      border-radius: 8px;
+    }
+    .premium-section {
+      margin-top: 20px;
+      padding: 20px;
+      background: rgba(74, 56, 255, 0.12);
+      border-radius: 16px;
+      border-left: 4px solid var(--secondary);
+    }
+    .premium-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .pathway-step {
+      display: flex;
+      margin: 12px 0;
+      gap: 12px;
+    }
+    .step-number {
+      background: var(--primary);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+    .step-content { flex: 1; }
+    .back {
+      display: block;
+      margin-top: 20px;
+      color: var(--secondary);
+      text-align: center;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">🧠 BrainByte</div>
+    
+    <div class="card">
+      <h2>📅 Weekly Review</h2>
+      <p>Reflect on Saturday. Discover your future on Sunday.</p>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="reflect">Saturday Reflection</button>
+        <button class="tab-btn" data-tab="report">Sunday Career Report</button>
+      </div>
+
+      <!-- SATURDAY: Reflection Form -->
+      <div id="reflect-tab">
+        <div class="form-group">
+          <label>What did you enjoy this week?</label>
+          <textarea id="enjoy" rows="2" placeholder="e.g., I loved solving algebra puzzles!"></textarea>
+        </div>
+        <div class="form-group">
+          <label>What frustrated you?</label>
+          <textarea id="frustrate" rows="2" placeholder="e.g., Physics vectors are confusing"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Hardest topic this week</label>
+          <input type="text" id="hardest" placeholder="e.g., Newton's Laws" />
+        </div>
+        <div class="form-group">
+          <label>Easiest topic this week</label>
+          <input type="text" id="easiest" placeholder="e.g., Linear Equations" />
+        </div>
+        <button class="btn" id="submit-reflection">Save Reflection →</button>
+      </div>
+
+      <!-- SUNDAY: AI Report -->
+      <div id="report-tab" class="hidden">
+        <div class="toggle">
+          <span>Premium Analysis?</span>
+          <input type="checkbox" id="premium-toggle" checked>
+        </div>
+        <button class="btn" id="generate-report">Generate Career Report</button>
+
+        <div class="hidden" id="report-output">
+          <h3>🧠 BrainByte Career AI Report</h3>
+          <p id="report-summary"></p>
+
+          <h4>Skill Ratings</h4>
+          <div class="skills-grid" id="skills-grid"></div>
+
+          <h4>Top Career Matches</h4>
+          <ul class="careers-list" id="careers-list"></ul>
+
+          <!-- PREMIUM DEEP ANALYSIS -->
+          <div class="premium-section hidden" id="premium-section">
+            <h4><i class="fas fa-diamond"></i> Premium Deep Analysis</h4>
+            
+            <p id="skill-gap-analysis"></p>
+            
+            <h4>Personalized 7-Day Mastery Pathway</h4>
+            <div id="pathway-steps"></div>
+            
+            <h4>Zimbabwe Career Context</h4>
+            <p id="zim-context"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <a href="hub.html" class="back">← Back to Hub</a>
+  </div>
+
+  <script>
+    // Tab switching
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[id$="-tab"]').forEach(t => t.classList.add('hidden'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + '-tab').classList.remove('hidden');
+      });
+    });
+
+    // Submit Saturday reflection
+    document.getElementById('submit-reflection').addEventListener('click', () => {
+      const payload = {
+        user_id: "demo_user",
+        grade: "Secondary",
+        weekly_reflection: {
+          enjoy: document.getElementById('enjoy').value || "Nothing specific",
+          frustrate: document.getElementById('frustrate').value || "Nothing specific",
+          hardest: document.getElementById('hardest').value || "N/A",
+          easiest: document.getElementById('easiest').value || "N/A"
+        }
+      };
+
+      fetch('http://localhost:8000/ai/record-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).then(() => {
+        alert("✅ Reflection saved! AI will use this for your Sunday report.");
+      }).catch(() => {
+        alert("✅ Reflection saved! (Mock mode)");
+      });
+    });
+
+    // Generate report
+    document.getElementById('generate-report').addEventListener('click', () => {
+      const isPremium = document.getElementById('premium-toggle').checked;
+      
+      fetch(`http://localhost:8000/ai/career-report/demo_user?is_premium=${isPremium}`)
+        .then(res => res.json())
+        .then(report => showReport(report, isPremium))
+        .catch(() => {
+          // Mock deep premium data
+          const mockPremium = {
+            careers: ["Biomedical Engineer", "Data Analyst", "Science Teacher", "Software Developer", "Environmental Scientist"],
+            skill_ratings: {
+              "Problem-solving": 4,
+              "Creativity": 3,
+              "People skills": 2,
+              "Tech affinity": 5,
+              "Analytical skills": 4
+            },
+            explanations: [
+              "You scored 4/5 in analytical thinking because you consistently solve multi-step math problems correctly. To reach 5/5, try advanced physics problem sets."
+            ],
+            // === NEW: Premium-only fields ===
+            skill_gap_analysis: "Your main gap is in 'Conceptual Linking' (2/5). You treat Math and Physics as separate subjects, but real-world STEM problems blend them. Start connecting formulas to real phenomena.",
+            mastery_pathway: [
+              "Watch: _“Forces as Arrows”_ (2-min premium video)",
+              "Complete 5 scaffolded problems (with step hints)",
+              "Join Interest Chat Room: _“Physics Puzzlers”_",
+              "Take micro-quiz → Unlock revision pack",
+              "Record a 60-sec voice note: _“Explain F=ma like I’m 10”_",
+              "Apply to mini-project: _“Design a crash-safe toy car”_",
+              "Weekly review with AI tutor (text-based)"
+            ],
+            zim_context: "Zimbabwe’s healthcare tech sector is growing (e.g., Harare MedTech Hub). Enroll in NUST’s Biomedical Engineering (entry requires strong Math & Physical Science). BrainByte partners with ZimSciTech Foundation — complete 3 mastery pathways to qualify for mentorship."
+          };
+          showReport(mockPremium, isPremium);
+        });
+    });
+
+    function showReport(report, isPremium) {
+      document.getElementById('report-output').classList.remove('hidden');
+      
+      document.getElementById('report-summary').textContent = 
+        `Based on your week, your top match is: ${report.careers[0]}.`;
+
+      // Skills
+      const skillsGrid = document.getElementById('skills-grid');
+      skillsGrid.innerHTML = '';
+      for (const [skill, rating] of Object.entries(report.skill_ratings)) {
+        const stars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        const div = document.createElement('div');
+        div.className = 'skill-item';
+        div.innerHTML = `<div>${skill}</div><div class="stars">${stars}</div>`;
+        skillsGrid.appendChild(div);
+      }
+
+      // Careers
+      const careersList = document.getElementById('careers-list');
+      careersList.innerHTML = '';
+      report.careers.slice(0, 5).forEach(c => {
+        const li = document.createElement('li');
+        li.textContent = c;
+        careersList.appendChild(li);
+      });
+
+      // Premium Deep Analysis
+      const premiumSection = document.getElementById('premium-section');
+      if (isPremium) {
+        document.getElementById('skill-gap-analysis').textContent = report.skill_gap_analysis || "Strong in logic & tech → great for software roles";
+        const stepsContainer = document.getElementById('pathway-steps');
+        stepsContainer.innerHTML = '';
+        const pathway = report.mastery_pathway || ["Complete advanced practice sets", "Join study groups", "Review weekly"];
+        pathway.forEach((step, i) => {
+          const div = document.createElement('div');
+          div.className = 'pathway-step';
+          div.innerHTML = `
+            <div class="step-number">${i+1}</div>
+            <div class="step-content">${step}</div>
+          `;
+          stepsContainer.appendChild(div);
+        });
+        document.getElementById('zim-context').textContent = report.zim_context || "Local opportunities available through school partnerships.";
+        premiumSection.classList.remove('hidden');
+      } else {
+        premiumSection.classList.add('hidden');
+      }
+    }
+  </script>
+  <!-- Background Music -->
+<audio id="bgMusic" loop>
+  <source src="assets/audio/bg-music.mp3" type="audio/mpeg">
+</audio>
+<script>
+  // Auto-play on first user interaction (required by browsers)
+  document.addEventListener('click', function initAudio() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      // Unmute if previously muted
+      bgMusic.muted = false;
+      // Try to play
+      bgMusic.play().catch(e => console.log("Audio play blocked:", e));
+      // Remove listener after first play
+      document.removeEventListener('click', initAudio);
+    }
+  }, { once: true });
+</script>
+<button id="musicToggle" style="position:fixed; top:10px; right:10px; z-index:100; padding:6px 10px; background:rgba(0,0,0,0.3); color:white; border:1px solid white; border-radius:5px;">
+  🎵 Mute
+</button>
+
+<script>
+  document.getElementById('musicToggle').addEventListener('click', function() {
+    const bgMusic = document.getElementById('bgMusic');
+    if (bgMusic) {
+      bgMusic.muted = !bgMusic.muted;
+      this.textContent = bgMusic.muted ? '🔇 Unmute' : '🎵 Mute';
+    }
+  });
+</script>
+</body>
+</html>
