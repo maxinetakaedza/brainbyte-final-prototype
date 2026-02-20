@@ -1,1 +1,29 @@
-<!DOCTYPE html>\n<html lang="en">\n<head>\n    <meta charset="UTF-8">\n    <meta name="viewport" content="width=device-width, initial-scale=1.0">\n    <title>Brain Byte Complete</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }\n        header { background: #4CAF50; color: white; padding: 10px; text-align: center; }\n        .quiz-container { margin: 20px 0; }\n        .note-sharing, .review-dashboard { margin: 20px; padding: 15px; border: 1px solid #ccc; }\n        .button { padding: 10px; background: #4CAF50; color: white; border: none; cursor: pointer; }\n    </style>\n</head>\n<body>\n    <header>\n        <h1>Brain Byte</h1>\n    </header>\n    <main>\n        <div class="quiz-container">\n            <h2>Quizzes</h2>\n            <p>30 IGCSE Questions: 15 Chemistry, 15 Biology</p>\n            <button class="button" onclick="startQuiz()">Start Quiz</button>\n        </div>\n        <div class="note-sharing">\n            <h2>Peer Note Sharing Chatroom</h2>\n            <textarea id="note" placeholder="Share your notes..."></textarea>\n            <button class="button" onclick="shareNote()">Share Note</button>\n            <div id="notes"></div>\n        </div>\n        <div class="review-dashboard">\n            <h2>Weekly Review Dashboard</h2>\n            <button class="button" onclick="showReviewDashboard()">View Dashboard</button>\n            <div id="dashboard"></div>\n        </div>\n    </main>\n    <script>\n        // LocalStorage for XP tracking, streak counting, and weak topic identification\n        function startQuiz() {\n            // Logic to start the quiz and handle results\n            alert('Starting the quiz!');\n        }\n\n        function shareNote() {\n            let note = document.getElementById('note').value;\n            if (note) {\n                let notes = JSON.parse(localStorage.getItem('sharedNotes')) || [];\n                notes.push(note);\n                localStorage.setItem('sharedNotes', JSON.stringify(notes));\n                displayNotes();\n                document.getElementById('note').value = '';\n            }\n        }\n\n        function displayNotes() {\n            let notes = JSON.parse(localStorage.getItem('sharedNotes')) || [];\n            document.getElementById('notes').innerHTML = notes.join('<br>');\n        }\n\n        function showReviewDashboard() {\n            // Logic to display review dashboard\n            alert('Displaying review dashboard!');\n        }\n\n        window.onload = displayNotes; // Load shared notes on page load\n    <\/script>\n</body>\n</html>\n
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Byte</title>
+</head>
+<body>
+    <script>
+        function setupUser() {
+            const nameInput = document.getElementById('nameInput');
+            const name = nameInput.value.trim();
+            if (name) {
+                localStorage.setItem('username', name);
+                navigateToNextScreen();
+            } else {
+                alert('Please enter your name.');
+            }
+        }
+
+        function navigateToNextScreen() {
+            window.location.href = 'nextScreen.html'; // Change to your next screen's URL
+        }
+    </script>
+    <h1>Welcome to Brain Byte!</h1>
+    <input type="text" id="nameInput" placeholder="Enter your name" />
+    <button onclick="setupUser()">Continue</button>
+</body>
+</html>
